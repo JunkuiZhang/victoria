@@ -7,3 +7,7 @@ edition = "2021"
 
 [dependencies]
 winit = "*"
+bytemuck = "*"
+wgpu = "*"
+pollster = "*"
+env_logger = "*"
