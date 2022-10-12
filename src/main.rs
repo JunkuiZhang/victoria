@@ -28,6 +28,7 @@ fn main() {
             winit::event::Event::MainEventsCleared => {
                 // Update here
                 // Render here
+                controller.draw();
             }
             _ => {}
         }
