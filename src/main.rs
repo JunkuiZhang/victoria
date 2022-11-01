@@ -27,6 +27,7 @@ fn main() {
                 event: winit::event::WindowEvent::CloseRequested,
                 ..
             } => {
+                controller.exit();
                 control_flow.set_exit();
             }
             winit::event::Event::MainEventsCleared => {

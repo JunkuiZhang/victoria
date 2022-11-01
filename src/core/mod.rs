@@ -34,4 +34,8 @@ impl Controller {
     pub fn draw(&self) {
         self.graphics.render();
     }
+
+    pub fn exit(&self) {
+        self.settings.save();
+    }
 }
