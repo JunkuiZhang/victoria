@@ -13,9 +13,10 @@ fn main() {
             settings::WINDOW_HEIGHT,
         ))
         .with_title(settings::WINDOW_TITLE)
+        .with_resizable(false)
         .build(&event_loop)
         .unwrap();
-    let controller = Controller::new(&window);
+    let mut controller = Controller::new(&window);
     event_loop.run(move |event, _, control_flow| {
         control_flow.set_poll();
         match event {
@@ -27,6 +28,7 @@ fn main() {
             }
             winit::event::Event::MainEventsCleared => {
                 // Update here
+                controller.update();
                 // Render here
                 controller.draw();
             }

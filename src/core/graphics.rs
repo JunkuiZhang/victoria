@@ -41,7 +41,7 @@ impl Graphics {
             format: surface.get_supported_formats(&adapter)[0],
             width: crate::settings::WINDOW_WIDTH,
             height: crate::settings::WINDOW_HEIGHT,
-            present_mode: wgpu::PresentMode::Immediate,
+            present_mode: wgpu::PresentMode::AutoVsync,
             alpha_mode: surface.get_supported_alpha_modes(&adapter)[0],
         };
         surface.configure(&device, &surface_config);
