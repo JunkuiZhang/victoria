@@ -2,6 +2,7 @@ use crate::settings::GameSettings;
 
 use self::{game_time::GameTimeManager, graphics::Graphics, user_input::UserInput};
 
+mod font_manager;
 mod game_time;
 mod graphics;
 mod user_input;
