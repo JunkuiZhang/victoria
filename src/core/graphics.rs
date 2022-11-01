@@ -1,3 +1,5 @@
+use crate::settings::GameSettings;
+
 pub struct Graphics {
     device: wgpu::Device,
     surface: wgpu::Surface,
@@ -16,7 +18,7 @@ fn get_backend() -> wgpu::Backends {
 }
 
 impl Graphics {
-    pub fn new(window: &winit::window::Window) -> Self {
+    pub fn new(window: &winit::window::Window, settings: &GameSettings) -> Self {
         // surface queue config
         let instance = wgpu::Instance::new(get_backend());
         let surface = unsafe { instance.create_surface(window) };
@@ -39,8 +41,8 @@ impl Graphics {
         let surface_config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface.get_supported_formats(&adapter)[0],
-            width: crate::settings::WINDOW_WIDTH,
-            height: crate::settings::WINDOW_HEIGHT,
+            width: settings.get_window_width(),
+            height: settings.get_window_height(),
             present_mode: wgpu::PresentMode::AutoVsync,
             alpha_mode: surface.get_supported_alpha_modes(&adapter)[0],
         };
