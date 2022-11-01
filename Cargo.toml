@@ -11,3 +11,5 @@ bytemuck = "*"
 wgpu = "*"
 pollster = "*"
 env_logger = "*"
+serde = {version = "*",features = ["derive"]}
+toml = "*"

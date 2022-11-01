@@ -8,7 +8,7 @@ mod utils;
 
 fn main() {
     env_logger::init();
-    let game_settings = GameSettings::new();
+    let mut game_settings = Box::new(GameSettings::new());
     let event_loop = winit::event_loop::EventLoop::new();
     let window = winit::window::WindowBuilder::new()
         .with_inner_size(winit::dpi::PhysicalSize::new(

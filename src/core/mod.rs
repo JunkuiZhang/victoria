@@ -9,19 +9,19 @@ mod user_input;
 
 pub struct Controller {
     graphics: Graphics,
-    settings: GameSettings,
+    settings: Box<GameSettings>,
     input: UserInput,
     time_manager: GameTimeManager,
 }
 
 impl Controller {
-    pub fn new(window: &winit::window::Window, game_settings: GameSettings) -> Self {
+    pub fn new(window: &winit::window::Window, game_settings: Box<GameSettings>) -> Self {
         let graphics = Graphics::new(window, &game_settings);
         let input = UserInput::new();
 
         Controller {
             graphics,
-            settings: game_settings,
+            settings: game_settings.clone(),
             input,
             time_manager: GameTimeManager::new(),
         }
