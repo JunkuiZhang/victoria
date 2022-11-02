@@ -8,7 +8,7 @@ mod utils;
 
 fn main() {
     env_logger::init();
-    let mut game_settings = Box::new(GameSettings::new());
+    let game_settings = Box::new(GameSettings::new());
     let event_loop = winit::event_loop::EventLoop::new();
     let window = winit::window::WindowBuilder::new()
         .with_inner_size(winit::dpi::PhysicalSize::new(
@@ -39,4 +39,15 @@ fn main() {
             _ => {}
         }
     });
+}
+
+#[cfg(test)]
+mod test {
+
+    #[test]
+    fn general_test() {
+        let resource_dir = std::path::Path::new("data");
+        let content = std::fs::read(resource_dir.join("Inconsolata-Regular.ttf")).unwrap();
+        panic!("{:?}", content);
+    }
 }

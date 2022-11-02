@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
@@ -65,7 +65,7 @@ impl GameSettings {
         if !self.has_changed {
             return;
         }
-        if !std::env::current_dir().unwrap().join("data").exists() {
+        if !Path::new("data").exists() {
             std::fs::create_dir_all(std::env::current_dir().unwrap().join("data")).unwrap();
         }
         let es_path = Path::new("data").join(ENGINE_SETTING_FILE);
@@ -73,7 +73,6 @@ impl GameSettings {
         if es_path.exists() {
             std::fs::remove_file(es_path.clone()).unwrap();
         }
-        println!("==> {:?}", es_path);
         std::fs::File::create(es_path.clone()).unwrap();
         if ps_path.exists() {
             std::fs::remove_file(ps_path.clone()).unwrap();
