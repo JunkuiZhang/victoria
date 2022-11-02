@@ -839,6 +839,7 @@ dependencies = [
  "pollster",
  "serde",
  "toml",
+ "ttf-parser",
  "wgpu",
  "winit",
 ]
@@ -1273,6 +1274,12 @@ checksum = "8d82e1a7758622a465f8cee077614c73484dac5b836c02ff6a40d5d1010324d7"
 dependencies = [
  "serde",
 ]
+
+[[package]]
+name = "ttf-parser"
+version = "0.17.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "375812fa44dab6df41c195cd2f7fecb488f6c09fbaafb62807488cefab642bff"
 
 [[package]]
 name = "unicode-ident"
