@@ -22,10 +22,10 @@ pub struct Controller {
 
 impl Controller {
     pub fn new(window: &winit::window::Window, game_settings: Box<GameSettings>) -> Self {
-        let graphics = Graphics::new(window, &game_settings);
+        let font_path = Path::new("data").join("Inconsolata-Regular.ttf");
+        let font_manager = FontManager::new(font_path);
+        let graphics = Graphics::new(window, &game_settings, &font_manager);
         let input = UserInput::new();
-        let p = Path::new("data").join("Inconsolata-Regular.ttf");
-        let font_manager = FontManager::new(p);
 
         Controller {
             graphics,
@@ -42,6 +42,10 @@ impl Controller {
 
     pub fn draw(&self) {
         self.graphics.render();
+    }
+
+    pub fn set(&mut self) {
+        self.graphics.set_font();
     }
 
     pub fn exit(&self) {

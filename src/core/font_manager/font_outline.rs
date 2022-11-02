@@ -19,6 +19,14 @@ impl FontOutlineData {
     pub fn new() -> Self {
         FontOutlineData { points: Vec::new() }
     }
+
+    pub fn finish(&mut self) {
+        self.points.shrink_to_fit();
+    }
+
+    pub fn point_command_iter(&self) -> std::slice::Iter<OutlineDrawCommand> {
+        self.points.iter()
+    }
 }
 
 impl ttf_parser::OutlineBuilder for FontOutlineData {
@@ -37,6 +45,7 @@ impl ttf_parser::OutlineBuilder for FontOutlineData {
     fn curve_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x: f32, y: f32) {
         self.points
             .push(OutlineDrawCommand::CurveTo(x1, y1, x2, y2, x, y));
+        unreachable!("Should not reach!");
     }
 
     fn close(&mut self) {

@@ -1,10 +1,17 @@
+use wgpu::util::DeviceExt;
+
 use crate::settings::GameSettings;
+
+use super::font_manager::FontManager;
 
 pub struct Graphics {
     device: wgpu::Device,
     surface: wgpu::Surface,
     queue: wgpu::Queue,
     render_pipeline: wgpu::RenderPipeline,
+    vertex_buffer: wgpu::Buffer,
+    indices_buffer: wgpu::Buffer,
+    num: u32,
 }
 
 #[cfg(windows)]
@@ -18,7 +25,11 @@ fn get_backend() -> wgpu::Backends {
 }
 
 impl Graphics {
-    pub fn new(window: &winit::window::Window, settings: &GameSettings) -> Self {
+    pub fn new(
+        window: &winit::window::Window,
+        settings: &GameSettings,
+        font_manager: &FontManager,
+    ) -> Self {
         // surface queue config
         let instance = wgpu::Instance::new(get_backend());
         let surface = unsafe { instance.create_surface(window) };
@@ -44,7 +55,7 @@ impl Graphics {
             width: settings.get_window_width(),
             height: settings.get_window_height(),
             present_mode: wgpu::PresentMode::AutoVsync,
-            alpha_mode: surface.get_supported_alpha_modes(&adapter)[0],
+            alpha_mode: wgpu::CompositeAlphaMode::Auto,
         };
         surface.configure(&device, &surface_config);
 
@@ -55,6 +66,37 @@ impl Graphics {
         });
 
         // pipeline config
+        // let verteices = [
+        //     [-0.7f32, 0.7, 0.0],
+        //     [-0.7, -0.7, 0.0],
+        //     [0.7, 0.7, 0.0],
+        //     [0.7, -0.7, 0.0],
+        // ];
+        let verteices = [
+            [-0.7f32, 0.7, 0.0],
+            [-0.7, -0.7, 0.0],
+            [0.7, 0.7, 0.0],
+            [0.7, 0.7, 0.0],
+            [-0.7, -0.7, 0.0],
+            [0.7, -0.7, 0.0],
+        ];
+        let indices = [0u16, 1, 2, 2, 1, 3];
+        let font_vertices = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: None,
+            contents: bytemuck::cast_slice(&verteices),
+            usage: wgpu::BufferUsages::VERTEX,
+        });
+        let font_indices = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: None,
+            contents: bytemuck::cast_slice(&indices),
+            usage: wgpu::BufferUsages::INDEX,
+        });
+        let num_font_indices = indices.len();
+        let vertex_buffer_layout = wgpu::VertexBufferLayout {
+            array_stride: std::mem::size_of::<[f32; 3]>() as u64,
+            step_mode: wgpu::VertexStepMode::Vertex,
+            attributes: &wgpu::vertex_attr_array![0 => Float32x3],
+        };
         let rp_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: None,
             bind_group_layouts: &[],
@@ -65,16 +107,33 @@ impl Graphics {
             layout: Some(&rp_layout),
             vertex: wgpu::VertexState {
                 module: &draw_shader,
-                entry_point: "main_vs",
-                buffers: &[],
+                entry_point: "vs_main",
+                buffers: &[vertex_buffer_layout],
             },
-            primitive: wgpu::PrimitiveState::default(),
+            primitive: wgpu::PrimitiveState {
+                topology: wgpu::PrimitiveTopology::TriangleList,
+                strip_index_format: None,
+                front_face: wgpu::FrontFace::Ccw,
+                cull_mode: Some(wgpu::Face::Back),
+                unclipped_depth: false,
+                polygon_mode: wgpu::PolygonMode::Fill,
+                conservative: false,
+            },
             depth_stencil: None,
             multisample: wgpu::MultisampleState::default(),
             fragment: Some(wgpu::FragmentState {
                 module: &draw_shader,
-                entry_point: "main_fs",
-                targets: &[Some(surface_config.format.into())],
+                entry_point: "fs_main",
+                targets: &[Some(wgpu::ColorTargetState {
+                    format: surface.get_supported_formats(&adapter)[0],
+                    blend: Some(wgpu::BlendState {
+                        color: wgpu::BlendComponent::OVER,
+                        alpha: wgpu::BlendComponent::OVER,
+                        // color: wgpu::BlendComponent::REPLACE,
+                        // alpha: wgpu::BlendComponent::REPLACE,
+                    }),
+                    write_mask: wgpu::ColorWrites::ALL,
+                })],
             }),
             multiview: None,
         });
@@ -84,8 +143,13 @@ impl Graphics {
             surface,
             queue,
             render_pipeline,
+            vertex_buffer: font_vertices,
+            indices_buffer: font_indices,
+            num: num_font_indices as u32,
         }
     }
+
+    pub fn set_font(&mut self) {}
 
     pub fn render(&self) {
         // get view
@@ -96,12 +160,12 @@ impl Graphics {
         let view = texture
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
-
         // preset
         let color_attach = [Some(wgpu::RenderPassColorAttachment {
             view: &view,
             resolve_target: None,
             ops: wgpu::Operations {
+                // load: wgpu::LoadOp::Clear(wgpu::Color::RED),
                 load: wgpu::LoadOp::Load,
                 store: true,
             },
@@ -122,6 +186,10 @@ impl Graphics {
         {
             let mut render_pass = command_encoder.begin_render_pass(&render_pass_desc);
             render_pass.set_pipeline(&self.render_pipeline);
+            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+            // render_pass.set_index_buffer(self.indices_buffer.slice(..), wgpu::IndexFormat::Uint16);
+            // render_pass.draw_indexed(0..self.num, 0, 0..1)
+            render_pass.draw(0..6, 0..1);
         }
 
         self.queue.submit(Some(command_encoder.finish()));
