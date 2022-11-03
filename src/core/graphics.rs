@@ -12,11 +12,13 @@ pub struct Graphics {
     vertex_buffer: wgpu::Buffer,
     indices_buffer: wgpu::Buffer,
     num: u32,
+    x_curve_bindgroup: wgpu::BindGroup,
 }
 
 #[cfg(windows)]
 fn get_backend() -> wgpu::Backends {
-    wgpu::Backends::DX12
+    // wgpu::Backends::DX12
+    wgpu::Backends::VULKAN
 }
 
 #[cfg(not(windows))]
@@ -35,7 +37,7 @@ impl Graphics {
         let surface = unsafe { instance.create_surface(window) };
         let adapter =
             pollster::block_on(instance.request_adapter(&wgpu::RequestAdapterOptionsBase {
-                power_preference: wgpu::PowerPreference::HighPerformance,
+                power_preference: wgpu::PowerPreference::LowPower,
                 force_fallback_adapter: false,
                 compatible_surface: Some(&surface),
             }))
@@ -49,6 +51,8 @@ impl Graphics {
             None,
         ))
         .unwrap();
+        println!("{:?}", adapter.get_info());
+
         let surface_config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface.get_supported_formats(&adapter)[0],
@@ -66,28 +70,20 @@ impl Graphics {
         });
 
         // pipeline config
-        // let verteices = [
-        //     [-0.7f32, 0.7, 0.0],
-        //     [-0.7, -0.7, 0.0],
-        //     [0.7, 0.7, 0.0],
-        //     [0.7, -0.7, 0.0],
-        // ];
         let verteices = [
             [-0.7f32, 0.7, 0.0],
             [-0.7, -0.7, 0.0],
             [0.7, 0.7, 0.0],
-            [0.7, 0.7, 0.0],
-            [-0.7, -0.7, 0.0],
             [0.7, -0.7, 0.0],
         ];
         let indices = [0u16, 1, 2, 2, 1, 3];
         let font_vertices = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: None,
+            label: Some("Font Bounding Box Vertex"),
             contents: bytemuck::cast_slice(&verteices),
             usage: wgpu::BufferUsages::VERTEX,
         });
         let font_indices = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: None,
+            label: Some("Font Bounding Box Index"),
             contents: bytemuck::cast_slice(&indices),
             usage: wgpu::BufferUsages::INDEX,
         });
@@ -97,9 +93,45 @@ impl Graphics {
             step_mode: wgpu::VertexStepMode::Vertex,
             attributes: &wgpu::vertex_attr_array![0 => Float32x3],
         };
+
+        let x_curve_list = font_manager.generate_curve_list(true);
+        let x_curve_bg_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: Some("X Curve List"),
+            entries: &[wgpu::BindGroupLayoutEntry {
+                binding: 0,
+                visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
+                ty: wgpu::BindingType::Buffer {
+                    ty: wgpu::BufferBindingType::Storage { read_only: true },
+                    has_dynamic_offset: false,
+                    min_binding_size: wgpu::BufferSize::new(
+                        (x_curve_list.len() * std::mem::size_of::<[f32; 2]>() * 4) as _,
+                    ),
+                },
+                count: None,
+            }],
+        });
+        let x_curve_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Glyph Curve Buffer"),
+            contents: bytemuck::cast_slice(&x_curve_list),
+            usage: wgpu::BufferUsages::VERTEX
+                | wgpu::BufferUsages::STORAGE
+                | wgpu::BufferUsages::COPY_DST
+                | wgpu::BufferUsages::COPY_SRC,
+        });
+        println!("Curve list: {}", x_curve_list.len());
+        println!("{:?}", x_curve_list);
+        let x_curve_bindgroup = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("Glyph Curve Bindgroup"),
+            layout: &x_curve_bg_layout,
+            entries: &[wgpu::BindGroupEntry {
+                binding: 0,
+                resource: x_curve_buffer.as_entire_binding(),
+            }],
+        });
+
         let rp_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            label: None,
-            bind_group_layouts: &[],
+            label: Some("Renderpipeline Layout"),
+            bind_group_layouts: &[&x_curve_bg_layout],
             push_constant_ranges: &[],
         });
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
@@ -126,12 +158,13 @@ impl Graphics {
                 entry_point: "fs_main",
                 targets: &[Some(wgpu::ColorTargetState {
                     format: surface.get_supported_formats(&adapter)[0],
-                    blend: Some(wgpu::BlendState {
-                        color: wgpu::BlendComponent::OVER,
-                        alpha: wgpu::BlendComponent::OVER,
-                        // color: wgpu::BlendComponent::REPLACE,
-                        // alpha: wgpu::BlendComponent::REPLACE,
-                    }),
+                    // blend: Some(wgpu::BlendState {
+                    // color: wgpu::BlendComponent::OVER,
+                    // alpha: wgpu::BlendComponent::OVER,
+                    // color: wgpu::BlendComponent::REPLACE,
+                    // alpha: wgpu::BlendComponent::REPLACE,
+                    // }),
+                    blend: Some(wgpu::BlendState::ALPHA_BLENDING),
                     write_mask: wgpu::ColorWrites::ALL,
                 })],
             }),
@@ -146,6 +179,7 @@ impl Graphics {
             vertex_buffer: font_vertices,
             indices_buffer: font_indices,
             num: num_font_indices as u32,
+            x_curve_bindgroup,
         }
     }
 
@@ -165,8 +199,8 @@ impl Graphics {
             view: &view,
             resolve_target: None,
             ops: wgpu::Operations {
-                // load: wgpu::LoadOp::Clear(wgpu::Color::RED),
-                load: wgpu::LoadOp::Load,
+                load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
+                // load: wgpu::LoadOp::Load,
                 store: true,
             },
         })];
@@ -187,9 +221,9 @@ impl Graphics {
             let mut render_pass = command_encoder.begin_render_pass(&render_pass_desc);
             render_pass.set_pipeline(&self.render_pipeline);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-            // render_pass.set_index_buffer(self.indices_buffer.slice(..), wgpu::IndexFormat::Uint16);
-            // render_pass.draw_indexed(0..self.num, 0, 0..1)
-            render_pass.draw(0..6, 0..1);
+            render_pass.set_index_buffer(self.indices_buffer.slice(..), wgpu::IndexFormat::Uint16);
+            render_pass.set_bind_group(0, &self.x_curve_bindgroup, &[]);
+            render_pass.draw_indexed(0..self.num, 0, 0..1);
         }
 
         self.queue.submit(Some(command_encoder.finish()));
