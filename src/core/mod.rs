@@ -29,7 +29,7 @@ impl Controller {
 
         Controller {
             graphics,
-            settings: game_settings.clone(),
+            settings: game_settings,
             input,
             time_manager: GameTimeManager::new(),
             font_manager,

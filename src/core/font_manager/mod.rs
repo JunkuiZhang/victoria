@@ -1,6 +1,6 @@
 use ttf_parser::Rect;
 
-use self::font_outline::{FontOutlineData, OutlineDrawCommand};
+use self::font_outline::FontOutlineData;
 
 mod font_outline;
 
@@ -76,12 +76,7 @@ impl FontManager {
         }
 
         for [p0, p1, p2] in curves {
-            let axis;
-            if x_direction {
-                axis = 0;
-            } else {
-                axis = 1;
-            }
+            let axis = if x_direction { 0 } else { 1 };
             let mut max = p0[axis];
             if max < p1[axis] {
                 max = p1[axis];
