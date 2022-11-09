@@ -27,6 +27,7 @@ fn vs_main(input: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(@location(0) input: vec2<f32>) -> @location(0) vec4<f32> {
+    let epsilon: f32 = 0.0001;
     let total = arrayLength(&x_curve_list);
     let pixel_per_em = 768.0 * 0.7;
     // transform to em coordinate system
@@ -43,8 +44,8 @@ fn fs_main(@location(0) input: vec2<f32>) -> @location(0) vec4<f32> {
             break;
         }
 
-        let max = x_curve_list[x].max.x - pixel.x;
-        if max * pixel_per_em < -0.5 {
+        let max_x = x_curve_list[x].max.x - pixel.x;
+        if max_x * pixel_per_em < -0.5 {
             break;
         }
 
@@ -61,28 +62,38 @@ fn fs_main(@location(0) input: vec2<f32>) -> @location(0) vec4<f32> {
         if point2.y > 0.0 {
             shift_num = shift_num + 8u;
         }
-        let res = 0x2e74 >> shift_num;
-        if (res & 0x01) > 0 {
-            let a = point0.y - 2.0 * point1.y + point2.y;
-            let b = point0.y - point1.y;
-            let c = point0.y;
-            let t = (b - sqrt(b * b - a * c)) / a;
-            let x = (point0.x - 2.0 * point1.x + point2.x) * t * t - 2.0 * (point0.x - point1.x) * t + point0.x;
-            if x >= 0.0 {
-                // winding_number = winding_number + clamp(pixel_per_em * x + 0.5, 0.0, 1.0);
-                winding_number = winding_number + 1.0;
-            }
+
+        let res = (0x2e74u >> shift_num) & 3u;
+        if res == 0u {
+            continue;
         }
-        if (res & 0x02) > 0 {
-            let a = point0.y - 2.0 * point1.y + point2.y;
-            let b = point0.y - point1.y;
-            let c = point0.y;
-            let t = (b + sqrt(b * b - a * c)) / a;
-            let x = (point0.x - 2.0 * point1.x + point2.x) * t * t - 2.0 * (point0.x - point1.x) * t + point0.x;
-            if x >= 0.0 {
-                // winding_number = winding_number - clamp(pixel_per_em * x + 0.5, 0.0, 1.0);
-                winding_number = winding_number - 1.0;
-            }
+        // solve the equation: a*t*t - 2*b*t + c = 0
+        let a = point0 - 2.0 * point1 + point2;
+        let b = point0 - point1;
+        let c = point0;
+        let d = sqrt(max(b.y * b.y - a.y * c.y, 0.0));
+        var t1: f32;
+        var t2: f32;
+
+        if abs(a.y) < epsilon {
+            // its a line, not a curve
+            t1 = c.y / (2.0 * b.y);
+            t2 = c.y / (2.0 * b.y);
+        } else {
+            t1 = (b.y - d) / a.y;
+            t1 = (b.y + d) / a.y;
+        }
+
+        if (res & 0x01u) > 0u {
+            let x1 = (a.x * t1 - 2.0 * b.x) * t1 + c.x;
+            winding_number = winding_number + clamp(pixel_per_em * x1 + 0.5, 0.0, 1.0);
+            // winding_number = winding_number + 1.0;
+        }
+
+        if res > 1u {
+            let x2 = (a.x * t2 - 2.0 * b.x) * t2 + c.x;
+            winding_number = winding_number - clamp(pixel_per_em * x2 + 0.5, 0.0, 1.0);
+            // winding_number = winding_number - 1.0;
         }
         // winding_number = winding_number + 0.07;
 

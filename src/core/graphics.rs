@@ -113,10 +113,7 @@ impl Graphics {
         let x_curve_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Glyph Curve Buffer"),
             contents: bytemuck::cast_slice(&x_curve_list),
-            usage: wgpu::BufferUsages::VERTEX
-                | wgpu::BufferUsages::STORAGE
-                | wgpu::BufferUsages::COPY_DST
-                | wgpu::BufferUsages::COPY_SRC,
+            usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::STORAGE,
         });
         println!("Curve list: {}", x_curve_list.len());
         println!("{:?}", x_curve_list);
@@ -158,12 +155,6 @@ impl Graphics {
                 entry_point: "fs_main",
                 targets: &[Some(wgpu::ColorTargetState {
                     format: surface.get_supported_formats(&adapter)[0],
-                    // blend: Some(wgpu::BlendState {
-                    // color: wgpu::BlendComponent::OVER,
-                    // alpha: wgpu::BlendComponent::OVER,
-                    // color: wgpu::BlendComponent::REPLACE,
-                    // alpha: wgpu::BlendComponent::REPLACE,
-                    // }),
                     blend: Some(wgpu::BlendState::ALPHA_BLENDING),
                     write_mask: wgpu::ColorWrites::ALL,
                 })],
