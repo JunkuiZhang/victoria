@@ -72,6 +72,7 @@ fn fs_main(@location(0) input: vec2<f32>) -> @location(0) vec4<f32> {
         let b = point0 - point1;
         let c = point0;
         let d = sqrt(max(b.y * b.y - a.y * c.y, 0.0));
+        let ay = 1.0 / a.y;
         var t1: f32;
         var t2: f32;
 
@@ -80,8 +81,8 @@ fn fs_main(@location(0) input: vec2<f32>) -> @location(0) vec4<f32> {
             t1 = c.y / (2.0 * b.y);
             t2 = c.y / (2.0 * b.y);
         } else {
-            t1 = (b.y - d) / a.y;
-            t1 = (b.y + d) / a.y;
+            t1 = (b.y - d) * ay;
+            t2 = (b.y + d) * ay;
         }
 
         if (res & 0x01u) > 0u {

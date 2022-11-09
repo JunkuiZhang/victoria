@@ -1,7 +1,8 @@
 pub struct FontOutlineData {
-    points: Vec<OutlineDrawCommand>,
+    pub points: Vec<OutlineDrawCommand>,
 }
 
+#[derive(Debug)]
 pub enum OutlineDrawCommand {
     // x, y
     MoveTo(f32, f32),
@@ -26,6 +27,12 @@ impl FontOutlineData {
 
     pub fn point_command_iter(&self) -> std::slice::Iter<OutlineDrawCommand> {
         self.points.iter()
+    }
+
+    pub fn print(&self) {
+        for point in self.points.iter() {
+            println!("{:?}", point);
+        }
     }
 }
 

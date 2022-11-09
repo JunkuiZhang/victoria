@@ -1,4 +1,4 @@
-use self::font_outline::FontOutlineData;
+use self::font_outline::{FontOutlineData, OutlineDrawCommand};
 
 mod font_outline;
 
@@ -15,15 +15,16 @@ impl FontManager {
         let mut latter_a = FontOutlineData::new();
         let mut latter_g = FontOutlineData::new();
         font_face
-            .outline_glyph(ttf_parser::GlyphId(4), &mut latter_a)
+            // .outline_glyph(ttf_parser::GlyphId(5), &mut latter_a)
+            .outline_glyph(ttf_parser::GlyphId(123), &mut latter_a)
             .unwrap();
         latter_a.finish();
         font_face
-            .outline_glyph(ttf_parser::GlyphId(309), &mut latter_g)
+            .outline_glyph(ttf_parser::GlyphId(304), &mut latter_g)
             .unwrap();
         latter_g.finish();
         // let units_per_em = [600.0, font_face.units_per_em() as f32];
-        let units_per_em = [700.0, 700.0];
+        let units_per_em = [1000.0, 1000.0];
 
         FontManager {
             latter_a,
@@ -36,7 +37,7 @@ impl FontManager {
         let mut curves = Vec::new();
         let mut result = Vec::new();
         let mut last_point = [0.0, 0.0];
-        for command in self.latter_a.point_command_iter() {
+        for command in self.latter_g.point_command_iter() {
             match *command {
                 font_outline::OutlineDrawCommand::MoveTo(a, b) => {
                     let x = a / self.units_per_em[0];
@@ -56,9 +57,12 @@ impl FontManager {
                 font_outline::OutlineDrawCommand::QuadTo(a1, b1, a, b) => {
                     let x1 = a1 / self.units_per_em[0];
                     let y1 = b1 / self.units_per_em[1];
+                    let p1 = [x1, y1];
                     let x = a / self.units_per_em[0];
                     let y = b / self.units_per_em[1];
-                    curves.push([last_point, [x1, y1], [x, y]]);
+                    let p2 = [x, y];
+                    curves.push([last_point, p1, p2]);
+                    last_point = p2;
                     println!("[{a}, {b}] ==> [{x}, {y}]");
                 }
                 font_outline::OutlineDrawCommand::CurveTo(_, _, _, _, _, _) => unreachable!(),
