@@ -1,10 +1,6 @@
 use std::path::Path;
 
-use ttf_parser::GlyphId;
-
 fn main() {
-    const LATTER_GBAR: GlyphId = GlyphId(309);
-
     let font_file = Path::new("data").join("Inconsolata-Regular.ttf");
     let font_data = std::fs::read(font_file).expect("Unable to open file.");
     let face = ttf_parser::Face::parse(&font_data, 0).expect("Unable to parse font.");
