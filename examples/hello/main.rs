@@ -14,33 +14,13 @@ fn main() {
         .outline_glyph(LATTER_A, &mut glyph_builder)
         .unwrap();
     println!("A: {}", glyph_builder.0);
-    let _ = font_face
+    let g = font_face
         .outline_glyph(LATTER_GBAR, &mut glyph_builder)
         .unwrap();
     println!("G bar: {}", glyph_builder.0);
-    let total = 0x2e74;
-    for y1 in 0..2 {
-        for y2 in 0..2 {
-            for y3 in 0..2 {
-                let mut shift_num = 0;
-                if y1 > 0 {
-                    shift_num += 2;
-                }
-                if y2 > 0 {
-                    shift_num += 4;
-                }
-                if y3 > 0 {
-                    shift_num += 8;
-                }
-                let res = total >> shift_num;
-                println!(
-                    "y1: {y1}, y2: {y2}, y3: {y3} ==> [{:b}, {:b}]",
-                    res & 0x01,
-                    res & 0x02
-                );
-            }
-        }
-    }
+    println!("======================================================");
+    println!("{:?}", g);
+    println!("width: {}, height: {}", g.width(), g.height())
 }
 
 struct ExmapleBuilder(String);
