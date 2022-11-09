@@ -1,4 +1,4 @@
-use ttf_parser::{FromData, Rect};
+use ttf_parser::Rect;
 
 use self::font_outline::{FontOutlineData, OutlineDrawCommand};
 
@@ -16,7 +16,7 @@ impl FontManager {
         let font_face = ttf_parser::Face::parse(&font_file, 0).unwrap();
         let mut this_char = FontOutlineData::new();
         let char_rect = font_face
-            .outline_glyph(ttf_parser::GlyphId(304), &mut this_char)
+            .outline_glyph(ttf_parser::GlyphId(9), &mut this_char)
             .unwrap();
         this_char.finish();
         let units_per_em = font_face.units_per_em() as f32;
@@ -26,6 +26,19 @@ impl FontManager {
             char_rect,
             units_per_em,
         }
+    }
+
+    fn get_rect(&self) -> [f32; 4] {
+        [
+            self.char_rect.width() as f32,
+            self.char_rect.height() as f32,
+            self.char_rect.x_min as f32,
+            self.char_rect.y_min as f32,
+        ]
+    }
+
+    pub fn get_font_info(&self) -> (f32, [f32; 4]) {
+        (self.units_per_em, self.get_rect())
     }
 
     pub fn generate_curve_list(&self, x_direction: bool) -> Vec<[[f32; 2]; 4]> {
@@ -87,9 +100,4 @@ impl FontManager {
 
         result
     }
-}
-
-#[inline]
-fn cross_product(v1_x: f32, v1_y: f32, v2_x: f32, v2_y: f32) -> f32 {
-    v1_x * v2_y - v1_y * v2_x
 }

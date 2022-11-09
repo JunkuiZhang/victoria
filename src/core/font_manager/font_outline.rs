@@ -28,12 +28,6 @@ impl FontOutlineData {
     pub fn point_command_iter(&self) -> std::slice::Iter<OutlineDrawCommand> {
         self.points.iter()
     }
-
-    pub fn print(&self) {
-        for point in self.points.iter() {
-            println!("{:?}", point);
-        }
-    }
 }
 
 impl ttf_parser::OutlineBuilder for FontOutlineData {

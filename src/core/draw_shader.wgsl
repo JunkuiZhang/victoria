@@ -7,6 +7,14 @@ struct VertexOutput {
     @location(0) xy: vec2<f32>,
 };
 
+struct FontRect {
+    pixels_per_em: f32,
+    units_per_em: f32,
+    pixels: vec2<f32>,
+    coordinate_in_vertx: vec2<f32>,
+    coordinate_in_units: vec2<f32>,
+};
+
 struct CurveInfo {
     max: vec2<f32>,
     p0: vec2<f32>,
@@ -15,7 +23,9 @@ struct CurveInfo {
 };
 
 @group(0) @binding(0)
-var<storage, read> x_curve_list: array<CurveInfo>;
+var<storage, read> font_info: FontRect;
+@group(0) @binding(1)
+var<storage, read> font_curves: array<CurveInfo>;
 
 @vertex
 fn vs_main(input: VertexInput) -> VertexOutput {
@@ -28,10 +38,9 @@ fn vs_main(input: VertexInput) -> VertexOutput {
 @fragment
 fn fs_main(@location(0) input: vec2<f32>) -> @location(0) vec4<f32> {
     let epsilon: f32 = 0.0001;
-    let total = arrayLength(&x_curve_list);
-    let pixel_per_em = 768.0 * 0.7;
+    let total = arrayLength(&font_curves);
     // transform to em coordinate system
-    let pixel = vec2<f32>(input.x + 0.7, input.y + 0.7) / 1.4;
+    let pixel = (input - font_info.coordinate_in_vertx) * font_info.pixels / font_info.pixels_per_em + (font_info.coordinate_in_units / font_info.units_per_em);
 
     var winding_number: f32 = 0.0;
     var temp_color: vec3<f32> = vec3<f32>(0.0, 0.0, 0.0);
@@ -39,19 +48,18 @@ fn fs_main(@location(0) input: vec2<f32>) -> @location(0) vec4<f32> {
 
     var x: u32 = 0u;
     loop {
-        // winding_number = winding_number + 0.5;
         if x >= total {
             break;
         }
 
-        let max_x = x_curve_list[x].max.x - pixel.x;
-        if max_x * pixel_per_em < -0.5 {
+        let max_x = font_curves[x].max.x - pixel.x;
+        if max_x * font_info.pixels_per_em < -0.5 {
             break;
         }
 
-        let point0 = x_curve_list[x].p0 - pixel;
-        let point1 = x_curve_list[x].p1 - pixel;
-        let point2 = x_curve_list[x].p2 - pixel;
+        let point0 = font_curves[x].p0 - pixel;
+        let point1 = font_curves[x].p1 - pixel;
+        let point2 = font_curves[x].p2 - pixel;
         var shift_num: u32 = 0u;
         if point0.y > 0.0 {
             shift_num = shift_num + 2u;
@@ -87,35 +95,19 @@ fn fs_main(@location(0) input: vec2<f32>) -> @location(0) vec4<f32> {
 
         if (res & 0x01u) > 0u {
             let x1 = (a.x * t1 - 2.0 * b.x) * t1 + c.x;
-            winding_number = winding_number + clamp(pixel_per_em * x1 + 0.5, 0.0, 1.0);
-            // winding_number = winding_number + 1.0;
+            winding_number = winding_number + clamp(font_info.pixels_per_em * x1 + 0.5, 0.0, 1.0);
         }
 
         if res > 1u {
             let x2 = (a.x * t2 - 2.0 * b.x) * t2 + c.x;
-            winding_number = winding_number - clamp(pixel_per_em * x2 + 0.5, 0.0, 1.0);
-            // winding_number = winding_number - 1.0;
+            winding_number = winding_number - clamp(font_info.pixels_per_em * x2 + 0.5, 0.0, 1.0);
         }
-        // winding_number = winding_number + 0.07;
 
         continuing {
             x = x + 1u;
         }
     }
-    // winding_number = 0.7;
-    // if pixel.x > 0.0 {
-    //     temp_color.x = 1.0;
-    //     if pixel.x >= 1.0 {
-    //         temp_color.x = 0.5;
-    //     }
-    // }
-    // if pixel.y > 0.0 {
-    //     temp_color.y = 1.0;
-    //     if pixel.y >= 1.0 {
-    //         temp_color.y = 0.5;
-    //     }
-    // }
 
-    // return vec4<f32>(1.0, 1.0, 1.0, winding_number);
     return vec4<f32>(temp_color, winding_number);
+    // return vec4<f32>(1.0, 0.7, 0.5, 1.0);
 }
