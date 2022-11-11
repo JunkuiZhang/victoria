@@ -16,7 +16,7 @@ impl FontManager {
         let font_face = ttf_parser::Face::parse(&font_file, 0).unwrap();
         let mut this_char = FontOutlineData::new();
         let char_rect = font_face
-            .outline_glyph(ttf_parser::GlyphId(9), &mut this_char)
+            .outline_glyph(font_face.glyph_index('我').unwrap(), &mut this_char)
             .unwrap();
         this_char.finish();
         let units_per_em = font_face.units_per_em() as f32;

@@ -22,7 +22,8 @@ pub struct Controller {
 
 impl Controller {
     pub fn new(window: &winit::window::Window, game_settings: Box<GameSettings>) -> Self {
-        let font_path = Path::new("data").join("Inconsolata-Regular.ttf");
+        // let font_path = Path::new("data").join("Inconsolata-Regular.ttf");
+        let font_path = Path::new("data").join("chi1.ttf");
         let font_manager = FontManager::new(font_path);
         let graphics = Graphics::new(window, &game_settings, &font_manager);
         let input = UserInput::new();
