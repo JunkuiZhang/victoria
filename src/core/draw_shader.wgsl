@@ -108,6 +108,15 @@ fn fs_main(@location(0) input: vec2<f32>) -> @location(0) vec4<f32> {
         }
     }
 
-    return vec4<f32>(temp_color, winding_number);
+    if winding_number > epsilon {
+        return vec4<f32>(temp_color, winding_number);
+    } else {
+        let my_number = vec2<u32>(u32(1.05), u32(1.7));
+        if (my_number.x == 1u) && (my_number.y == 1u) {
+            return vec4<f32>(0.2, 0.7, 0.2, 1.0);
+        } else {
+            return vec4<f32>(0.7, 0.2, 0.2, 1.0);
+        }
+    }
     // return vec4<f32>(1.0, 0.7, 0.5, 1.0);
 }
