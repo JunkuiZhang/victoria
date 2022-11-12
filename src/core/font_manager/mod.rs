@@ -10,9 +10,6 @@ mod font_outline;
 mod string_data;
 
 pub struct FontManager {
-    this_char: FontOutlineData,
-    char_rect: Rect,
-    units_per_em: f32,
     // font info in fontface, index using u16 glyph id
     font_data: Vec<FontData>,
     // rgba f32
@@ -34,9 +31,6 @@ impl FontManager {
         let units_per_em = font_face.units_per_em() as f32;
 
         FontManager {
-            this_char,
-            char_rect,
-            units_per_em,
             font_data: Vec::new(),
             font_curves: Vec::new(),
             font_curve_ordering_list: Vec::new(),
@@ -151,73 +145,5 @@ impl FontManager {
             self.string_vec.len(),
             &self.string_vec,
         )
-    }
-
-    fn get_rect(&self) -> [f32; 4] {
-        [
-            self.char_rect.width() as f32,
-            self.char_rect.height() as f32,
-            self.char_rect.x_min as f32,
-            self.char_rect.y_min as f32,
-        ]
-    }
-
-    pub fn get_font_info(&self) -> (f32, [f32; 4]) {
-        (self.units_per_em, self.get_rect())
-    }
-
-    pub fn generate_curve_list(&self, x_direction: bool) -> Vec<[[f32; 2]; 4]> {
-        let mut curves = Vec::new();
-        let mut result = Vec::new();
-        let mut last_point = [0.0, 0.0];
-        for command in self.this_char.point_command_iter() {
-            match *command {
-                font_outline::OutlineDrawCommand::MoveTo(a, b) => {
-                    let x = a / self.units_per_em;
-                    let y = b / self.units_per_em;
-                    last_point = [x, y];
-                }
-                font_outline::OutlineDrawCommand::LineTo(a, b) => {
-                    let x = a / self.units_per_em;
-                    let y = b / self.units_per_em;
-                    let p2 = [x, y];
-                    let p1 = [(x + last_point[0]) / 2.0, (y + last_point[1]) / 2.0];
-                    curves.push([last_point, p1, p2]);
-                    last_point = p2;
-                }
-                font_outline::OutlineDrawCommand::QuadTo(a1, b1, a, b) => {
-                    let x1 = a1 / self.units_per_em;
-                    let y1 = b1 / self.units_per_em;
-                    let p1 = [x1, y1];
-                    let x = a / self.units_per_em;
-                    let y = b / self.units_per_em;
-                    let p2 = [x, y];
-                    curves.push([last_point, p1, p2]);
-                    last_point = p2;
-                }
-                font_outline::OutlineDrawCommand::CurveTo(_, _, _, _, _, _) => unreachable!(),
-                font_outline::OutlineDrawCommand::Close => {}
-            }
-        }
-
-        for [p0, p1, p2] in curves {
-            let axis = if x_direction { 0 } else { 1 };
-            let mut max = p0[axis];
-            if max < p1[axis] {
-                max = p1[axis];
-            }
-            if max < p2[axis] {
-                max = p2[axis];
-            }
-            result.push([
-                [max, 0.0],
-                [p0[axis], p0[(axis + 1) % 2]],
-                [p1[axis], p1[(axis + 1) % 2]],
-                [p2[axis], p2[(axis + 1) % 2]],
-            ]);
-        }
-        result.sort_by(|[m0, _, _, _], [m1, _, _, _]| m1[0].partial_cmp(&m0[0]).unwrap());
-
-        result
     }
 }

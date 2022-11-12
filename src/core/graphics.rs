@@ -71,13 +71,6 @@ impl Graphics {
         });
 
         // pipeline config
-        let font_curves = font_manager.generate_curve_list(true);
-        let (units_per_em, font_rect) = font_manager.get_font_info();
-        let pixels_per_em = 768.0; // font size
-        let font_width =
-            font_rect[0] / units_per_em * pixels_per_em / settings.get_window_width() as f32;
-        let font_height =
-            font_rect[1] / units_per_em * pixels_per_em / settings.get_window_height() as f32;
         let verteices = [
             [0.0f32, 1.0, 0.0],
             [0.0, 0.0, 0.0],

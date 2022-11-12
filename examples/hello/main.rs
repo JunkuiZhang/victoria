@@ -17,7 +17,7 @@ fn main() {
     let g = font_face
         .outline_glyph(LATTER_GBAR, &mut glyph_builder)
         .unwrap();
-    println!("G bar: {}", glyph_builder.0);
+    println!("A: {}", u32::from('A'));
     println!("======================================================");
     println!("{:?}", g);
     println!("width: {}, height: {}", g.width(), g.height());
