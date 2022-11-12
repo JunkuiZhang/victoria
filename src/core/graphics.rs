@@ -14,12 +14,13 @@ pub struct Graphics {
     num: u32,
     font_data_bindgroup: wgpu::BindGroup,
     string_vec_buffer: wgpu::Buffer,
+    string_len: u32,
 }
 
 #[cfg(windows)]
 fn get_backend() -> wgpu::Backends {
-    // wgpu::Backends::DX12
-    wgpu::Backends::VULKAN
+    wgpu::Backends::DX12
+    // wgpu::Backends::PRIMARY
 }
 
 #[cfg(not(windows))]
@@ -38,7 +39,7 @@ impl Graphics {
         let surface = unsafe { instance.create_surface(window) };
         let adapter =
             pollster::block_on(instance.request_adapter(&wgpu::RequestAdapterOptionsBase {
-                power_preference: wgpu::PowerPreference::LowPower,
+                power_preference: wgpu::PowerPreference::HighPerformance,
                 force_fallback_adapter: false,
                 compatible_surface: Some(&surface),
             }))
@@ -98,7 +99,7 @@ impl Graphics {
         let string_vec_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("String Vec Buffer"),
             contents: bytemuck::cast_slice(string_vec),
-            usage: wgpu::BufferUsages::VERTEX,
+            usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::STORAGE,
         });
         let string_vec_buffer_layout = wgpu::VertexBufferLayout {
             array_stride: string_vec_stride,
@@ -154,17 +155,17 @@ impl Graphics {
         let font_info_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Font Rect Buffer"),
             contents: bytemuck::cast_slice(font_data),
-            usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::STORAGE,
+            usage: wgpu::BufferUsages::STORAGE,
         });
         let font_curves_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Glyph Curve Buffer"),
             contents: bytemuck::cast_slice(font_curves),
-            usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::STORAGE,
+            usage: wgpu::BufferUsages::STORAGE,
         });
         let font_ordering_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Glyph Curve Ordering Buffer"),
             contents: bytemuck::cast_slice(font_ordering_list),
-            usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::STORAGE,
+            usage: wgpu::BufferUsages::STORAGE,
         });
         let font_data_bindgroup = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("Glyph Curve Bindgroup"),
@@ -232,6 +233,7 @@ impl Graphics {
             num: num_font_indices as u32,
             font_data_bindgroup,
             string_vec_buffer,
+            string_len: string_vec_size as u32,
         }
     }
 
@@ -276,7 +278,7 @@ impl Graphics {
             render_pass.set_vertex_buffer(1, self.string_vec_buffer.slice(..));
             render_pass.set_index_buffer(self.indices_buffer.slice(..), wgpu::IndexFormat::Uint16);
             render_pass.set_bind_group(0, &self.font_data_bindgroup, &[]);
-            render_pass.draw_indexed(0..self.num, 0, 0..1);
+            render_pass.draw_indexed(0..self.num, 0, 0..self.string_len);
         }
 
         self.queue.submit(Some(command_encoder.finish()));

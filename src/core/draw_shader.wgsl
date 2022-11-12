@@ -9,11 +9,13 @@ struct VertexOutput {
     @builtin(position) pos: vec4<f32>,
     @location(0) xy: vec2<f32>,
     @location(1) pixels_per_em: f32,
+    @location(2) glyph_id: u32,
 };
 
 struct FragmengInput {
     @location(0) position: vec2<f32>,
     @location(1) pixels_per_em: f32,
+    @location(2) glyph_id: u32,
 };
 
 struct GlyphData {
@@ -38,13 +40,14 @@ var<storage, read> curve_orders: array<u32>;
 @vertex
 fn vs_main(input: VertexInput) -> VertexOutput {
     var out: VertexOutput;
+    out.glyph_id = input.glyph_id;
     // column left to right
     let multiplier = input.pixels_per_em / 768.0 * 2.0;
     let scale_x = font_info[input.glyph_id].width_over_height * multiplier;
     let scale_y = multiplier;
     let scale_mat = mat3x3<f32>(scale_x, 0.0, 0.0, 0.0, scale_y, 0.0, 0.0, 0.0, 1.0);
     let pos_scaled = scale_mat * input.position;
-    let move_mat = vec3<f32>(-scale_x * 0.5, -scale_y * 0.5, 0.0);
+    let move_mat = vec3<f32>(input.base_line.x, input.base_line.y, 0.0);
     out.pos = vec4<f32>(pos_scaled + move_mat, 1.0);
     let transform_mul = font_info[input.glyph_id].width_in_em / scale_x;
     out.xy = pos_scaled.xy * transform_mul;
@@ -55,8 +58,9 @@ fn vs_main(input: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(input: FragmengInput) -> @location(0) vec4<f32> {
+    var indicator: bool = false; // TODO: Delete
     let epsilon: f32 = 0.0001;
-    let glyph_id = 4;
+    let glyph_id = input.glyph_id;
     let glyph_data = font_info[glyph_id];
     if glyph_data.width_over_height < 0.0 {
         return vec4<f32>(0.0, 0.0, 0.0, 0.0);
@@ -76,6 +80,10 @@ fn fs_main(input: FragmengInput) -> @location(0) vec4<f32> {
         }
         let curve_index = curve_orders[glyph_data.curve_info_index + x + 1u];
         let point0 = font_curves[curve_index - 1u].p2 - pixel;
+        let origin_data = font_curves[curve_index - 1u].p2;
+        if origin_data.x < 0.0 || origin_data.y < 0.0 {
+            indicator = true;
+        }
         let this_curve = font_curves[curve_index];
         let point1 = this_curve.p1 - pixel;
         let point2 = this_curve.p2 - pixel;
@@ -137,10 +145,10 @@ fn fs_main(input: FragmengInput) -> @location(0) vec4<f32> {
     } else {
         let float_number = vec2<f32>(1.05, 1.7);
         let my_number = vec2<u32>(float_number);
-        if (my_number.x == 1u) && (my_number.y == 1u) {
-            return vec4<f32>(0.2, 0.7, 0.2, 1.0);
-        } else {
+        if indicator {
             return vec4<f32>(0.7, 0.2, 0.2, 1.0);
+        } else {
+            return vec4<f32>(0.2, 0.7, 0.2, 1.0);
         }
     }
     // return vec4<f32>(1.0, 0.7, 0.5, 1.0);

@@ -1,5 +1,5 @@
 pub struct FontOutlineData {
-    pub points: Vec<OutlineDrawCommand>,
+    points: Vec<OutlineDrawCommand>,
 }
 
 #[derive(Debug)]
@@ -21,12 +21,12 @@ impl FontOutlineData {
         FontOutlineData { points: Vec::new() }
     }
 
-    pub fn finish(&mut self) {
-        self.points.shrink_to_fit();
-    }
-
     pub fn point_command_iter(&self) -> std::slice::Iter<OutlineDrawCommand> {
         self.points.iter()
+    }
+
+    pub fn debug_print(&self) {
+        println!("Command len: {} ==> {:?}", self.points.len(), self.points);
     }
 }
 
