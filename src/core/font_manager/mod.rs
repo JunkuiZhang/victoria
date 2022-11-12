@@ -1,6 +1,6 @@
 use owned_ttf_parser::{AsFaceRef, OwnedFace};
 
-use crate::utils::{max_3number, min_3number};
+use crate::utils::max_3number;
 
 use self::{font_data::FontData, font_outline::FontOutlineData, string_data::CharData};
 
@@ -62,6 +62,7 @@ impl FontManager {
                 self.font_curves.len(),
                 self.font_curve_ordering_list.len(),
                 &char_rect,
+                units_per_em,
             ));
             let mut curve_info_data = Vec::new();
             for command in this_char.point_command_iter() {

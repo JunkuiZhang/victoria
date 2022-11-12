@@ -19,8 +19,8 @@ struct FragmengInput {
 struct GlyphData {
     curve_texel_index: u32,
     curve_info_index: u32,
-    glyph_width: f32,
-    glyph_height: f32,
+    width_over_height: f32,
+    width_in_em: f32,
 };
 
 struct CurveInfo {
@@ -38,14 +38,17 @@ var<storage, read> curve_orders: array<u32>;
 @vertex
 fn vs_main(input: VertexInput) -> VertexOutput {
     var out: VertexOutput;
-    let scale = font_info[input.glyph_id].glyph_width / font_info[input.glyph_id].glyph_height;
     // column left to right
-    let scale_mat = mat3x3<f32>(scale, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+    let multiplier = input.pixels_per_em / 768.0 * 2.0;
+    let scale_x = font_info[input.glyph_id].width_over_height * multiplier;
+    let scale_y = multiplier;
+    let scale_mat = mat3x3<f32>(scale_x, 0.0, 0.0, 0.0, scale_y, 0.0, 0.0, 0.0, 1.0);
     let pos_scaled = scale_mat * input.position;
-    let move_mat = vec3<f32>(-scale * 0.5, -0.5, 0.0);
-    let pos_moved = pos_scaled + move_mat;
-    out.pos = vec4<f32>(pos_moved, 1.0);
-    out.xy = (pos_scaled.xy - input.base_line) * 768.0 * 0.5 / input.pixels_per_em;
+    let move_mat = vec3<f32>(-scale_x * 0.5, -scale_y * 0.5, 0.0);
+    out.pos = vec4<f32>(pos_scaled + move_mat, 1.0);
+    let transform_mul = font_info[input.glyph_id].width_in_em / scale_x;
+    out.xy = pos_scaled.xy * transform_mul;
+    // out.xy = pos_scaled.xy / vec2<f32>(scale_x, scale_y);
     out.pixels_per_em = input.pixels_per_em;
     return out;
 }
@@ -55,6 +58,9 @@ fn fs_main(input: FragmengInput) -> @location(0) vec4<f32> {
     let epsilon: f32 = 0.0001;
     let glyph_id = 4;
     let glyph_data = font_info[glyph_id];
+    if glyph_data.width_over_height < 0.0 {
+        return vec4<f32>(0.0, 0.0, 0.0, 0.0);
+    }
     let total = curve_orders[glyph_data.curve_texel_index];
     // transform to em coordinate system
     let pixel = input.position;
