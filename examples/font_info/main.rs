@@ -1,19 +1,19 @@
 use std::path::Path;
 
 fn main() {
-    let font_file = Path::new("data").join("Inconsolata-Regular.ttf");
+    let font_file = Path::new("data").join("chi1.ttf");
     let font_data = std::fs::read(font_file).expect("Unable to open file.");
-    let face = ttf_parser::Face::parse(&font_data, 0).expect("Unable to parse font.");
+    let face = owned_ttf_parser::Face::parse(&font_data, 0).expect("Unable to parse font.");
     let family_name = face
         .names()
         .into_iter()
-        .find(|name| name.name_id == ttf_parser::name_id::FULL_NAME && name.is_unicode())
+        .find(|name| name.name_id == owned_ttf_parser::name_id::FULL_NAME && name.is_unicode())
         .and_then(|name| name.to_string());
 
     let post_script_name = face
         .names()
         .into_iter()
-        .find(|name| name.name_id == ttf_parser::name_id::POST_SCRIPT_NAME && name.is_unicode())
+        .find(|name| name.name_id == owned_ttf_parser::name_id::POST_SCRIPT_NAME && name.is_unicode())
         .and_then(|name| name.to_string());
 
     println!("Family name: {:?}", family_name);
@@ -37,4 +37,5 @@ fn main() {
     println!("Superscript: {:?}", face.superscript_metrics());
     println!("Permissions: {:?}", face.permissions());
     println!("Variable: {:?}", face.is_variable());
+    println!("Glyph id: {}", face.glyph_index('我').unwrap().0);
 }

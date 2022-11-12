@@ -1,4 +1,4 @@
-use ttf_parser::Rect;
+use owned_ttf_parser::{AsFaceRef, OwnedFace};
 
 use crate::utils::{max_3number, min_3number};
 
@@ -10,6 +10,7 @@ mod font_outline;
 mod string_data;
 
 pub struct FontManager {
+    font_face: OwnedFace,
     // font info in fontface, index using u16 glyph id
     font_data: Vec<FontData>,
     // rgba f32
@@ -20,17 +21,11 @@ pub struct FontManager {
 }
 
 impl FontManager {
-    pub fn new<P: AsRef<std::path::Path>>(font_file: P, font_curves_width: u32) -> Self {
-        let font_file = std::fs::read(font_file).unwrap();
-        let font_face = ttf_parser::Face::parse(&font_file, 0).unwrap();
-        let mut this_char = FontOutlineData::new();
-        let char_rect = font_face
-            .outline_glyph(font_face.glyph_index('A').unwrap(), &mut this_char)
-            .unwrap();
-        this_char.finish();
-        let units_per_em = font_face.units_per_em() as f32;
-
+    pub fn new<P: AsRef<std::path::Path>>(font_path: P) -> Self {
+        let font_file = std::fs::read(font_path).expect("Unable to read font!");
+        let font_face = owned_ttf_parser::OwnedFace::from_vec(font_file, 0).unwrap();
         FontManager {
+            font_face,
             font_data: Vec::new(),
             font_curves: Vec::new(),
             font_curve_ordering_list: Vec::new(),
@@ -38,20 +33,19 @@ impl FontManager {
         }
     }
 
-    pub fn read_font<P: AsRef<std::path::Path>>(&mut self, font_path: P, font_texture_width: u32) {
-        let font_file = std::fs::read(font_path).expect("Unable to read font!");
-        let font_face = ttf_parser::Face::parse(&font_file, 0).unwrap();
+    pub fn preprocess_font(&mut self) {
+        let font_face = self.font_face.as_face_ref();
         let units_per_em = font_face.units_per_em() as f32;
         self.font_data.clear();
         self.font_curves.clear();
         self.font_curve_ordering_list.clear();
 
-        // for glyph_id in 0..font_face.number_of_glyphs() {
-        for glyph_id in 0..6 {
+        for glyph_id in 0..font_face.number_of_glyphs() {
+            // for glyph_id in 0..6 {
             let mut this_char = FontOutlineData::new();
 
             let Some(char_rect) = font_face
-                .outline_glyph(ttf_parser::GlyphId(glyph_id), &mut this_char)
+                .outline_glyph(owned_ttf_parser::GlyphId(glyph_id), &mut this_char)
                 else {
                     self.font_data.push(FontData::empty());
                     println!("Skiped glyph: {}", glyph_id);
@@ -112,12 +106,17 @@ impl FontManager {
                 self.font_curve_ordering_list.push(*index as u32);
             }
         }
-
-        println!("{:?}", self.font_data[4]);
     }
 
     pub fn set_text(&mut self) {
-        self.string_vec.push(CharData::new(4, 600.0, [0.0, 0.0]));
+        for this_char in "Hello".chars() {
+            self.string_vec.push(CharData::new(
+                // self.font_face.glyph_index(this_char).unwrap().0 as u32,
+                4,
+                600.0,
+                [0.0, 0.0],
+            ));
+        }
     }
 
     pub fn get_font_data(&self) -> (usize, usize, &Vec<FontData>) {

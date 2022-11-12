@@ -30,7 +30,7 @@ impl FontOutlineData {
     }
 }
 
-impl ttf_parser::OutlineBuilder for FontOutlineData {
+impl owned_ttf_parser::OutlineBuilder for FontOutlineData {
     fn move_to(&mut self, x: f32, y: f32) {
         self.points.push(OutlineDrawCommand::MoveTo(x, y));
     }

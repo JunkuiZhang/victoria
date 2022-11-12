@@ -1,4 +1,4 @@
-use ttf_parser::Rect;
+use owned_ttf_parser::Rect;
 
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 #[repr(C)]

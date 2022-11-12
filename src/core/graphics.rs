@@ -107,14 +107,8 @@ impl Graphics {
         };
 
         let (font_data_mem_size, font_data_size, font_data) = font_manager.get_font_data();
-        println!("{:?}", font_data);
-        println!("==================================");
         let (font_texture_size, font_curves) = font_manager.get_font_curves();
-        println!("{:?}", font_curves);
-        println!("==================================");
         let (font_ordering_size, font_ordering_list) = font_manager.get_font_curve_ordering_list();
-        println!("{:?}", font_ordering_list);
-        println!("==================================");
         let font_bindgroup_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: Some("Font Data"),

@@ -22,4 +22,4 @@ pollster = "*"
 env_logger = "*"
 serde = {version = "*", features = ["derive"]}
 toml = "*"
-ttf-parser = "*"
+owned_ttf_parser = "*"
