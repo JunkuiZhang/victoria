@@ -6,7 +6,7 @@ fn main() {
     const LATTER_A: GlyphId = GlyphId(4);
     const LATTER_GBAR: GlyphId = GlyphId(309);
 
-    let font_file = Path::new("data").join("Inconsolata-Regular.ttf");
+    let font_file = Path::new("data").join("chi1.ttf");
     let font_data = std::fs::read(font_file).expect("Unable to open file.");
     let font_face = ttf_parser::Face::parse(&font_data, 0).expect("Unable to parse font.");
     let mut glyph_builder = ExmapleBuilder(String::new());
@@ -20,7 +20,8 @@ fn main() {
     println!("G bar: {}", glyph_builder.0);
     println!("======================================================");
     println!("{:?}", g);
-    println!("width: {}, height: {}", g.width(), g.height())
+    println!("width: {}, height: {}", g.width(), g.height());
+    println!("Q: {:?}", font_face.glyph_index('我').unwrap()); // 6215
 }
 
 struct ExmapleBuilder(String);

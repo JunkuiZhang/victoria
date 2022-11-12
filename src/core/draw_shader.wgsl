@@ -1,46 +1,63 @@
 struct VertexInput {
     @location(0) position: vec3<f32>,
+    @location(1) glyph_id: u32,
+    @location(2) base_line: vec2<f32>,
+    @location(3) pixels_per_em: f32,
 };
 
 struct VertexOutput {
     @builtin(position) pos: vec4<f32>,
     @location(0) xy: vec2<f32>,
+    @location(1) pixels_per_em: f32,
 };
 
-struct FontRect {
-    pixels_per_em: f32,
-    units_per_em: f32,
-    pixels: vec2<f32>,
-    coordinate_in_vertx: vec2<f32>,
-    coordinate_in_units: vec2<f32>,
+struct FragmengInput {
+    @location(0) position: vec2<f32>,
+    @location(1) pixels_per_em: f32,
+};
+
+struct GlyphData {
+    curve_texel_index: u32,
+    curve_info_index: u32,
+    glyph_width: f32,
+    glyph_height: f32,
 };
 
 struct CurveInfo {
-    max: vec2<f32>,
-    p0: vec2<f32>,
     p1: vec2<f32>,
     p2: vec2<f32>,
 };
 
 @group(0) @binding(0)
-var<storage, read> font_info: FontRect;
+var<storage, read> font_info: array<GlyphData>;
 @group(0) @binding(1)
 var<storage, read> font_curves: array<CurveInfo>;
+@group(0) @binding(2)
+var<storage, read> curve_orders: array<u32>;
 
 @vertex
 fn vs_main(input: VertexInput) -> VertexOutput {
     var out: VertexOutput;
-    out.pos = vec4<f32>(input.position, 1.0);
-    out.xy = vec2<f32>(input.position.x, input.position.y);
+    let scale = font_info[input.glyph_id].glyph_width / font_info[input.glyph_id].glyph_height;
+    // column left to right
+    let scale_mat = mat3x3<f32>(scale, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+    let pos_scaled = scale_mat * input.position;
+    let move_mat = vec3<f32>(-scale * 0.5, -0.5, 0.0);
+    let pos_moved = pos_scaled + move_mat;
+    out.pos = vec4<f32>(pos_moved, 1.0);
+    out.xy = (pos_scaled.xy - input.base_line) * 768.0 * 0.5 / input.pixels_per_em;
+    out.pixels_per_em = input.pixels_per_em;
     return out;
 }
 
 @fragment
-fn fs_main(@location(0) input: vec2<f32>) -> @location(0) vec4<f32> {
+fn fs_main(input: FragmengInput) -> @location(0) vec4<f32> {
     let epsilon: f32 = 0.0001;
-    let total = arrayLength(&font_curves);
+    let glyph_id = 4;
+    let glyph_data = font_info[glyph_id];
+    let total = curve_orders[glyph_data.curve_texel_index];
     // transform to em coordinate system
-    let pixel = (input - font_info.coordinate_in_vertx) * font_info.pixels / font_info.pixels_per_em + (font_info.coordinate_in_units / font_info.units_per_em);
+    let pixel = input.position;
 
     var winding_number: f32 = 0.0;
     var temp_color: vec3<f32> = vec3<f32>(0.0, 0.0, 0.0);
@@ -51,15 +68,16 @@ fn fs_main(@location(0) input: vec2<f32>) -> @location(0) vec4<f32> {
         if x >= total {
             break;
         }
-
-        let max_x = font_curves[x].max.x - pixel.x;
-        if max_x * font_info.pixels_per_em < -0.5 {
+        let curve_index = curve_orders[glyph_data.curve_info_index + x + 1u];
+        let point0 = font_curves[curve_index - 1u].p2 - pixel;
+        let this_curve = font_curves[curve_index];
+        let point1 = this_curve.p1 - pixel;
+        let point2 = this_curve.p2 - pixel;
+        let max_x = max(max(point0.x, point1.x), point2.x);
+        if max_x * input.pixels_per_em < -0.5 {
             break;
         }
 
-        let point0 = font_curves[x].p0 - pixel;
-        let point1 = font_curves[x].p1 - pixel;
-        let point2 = font_curves[x].p2 - pixel;
         var shift_num: u32 = 0u;
         if point0.y > 0.0 {
             shift_num = shift_num + 2u;
@@ -95,12 +113,12 @@ fn fs_main(@location(0) input: vec2<f32>) -> @location(0) vec4<f32> {
 
         if (res & 0x01u) > 0u {
             let x1 = (a.x * t1 - 2.0 * b.x) * t1 + c.x;
-            winding_number = winding_number + clamp(font_info.pixels_per_em * x1 + 0.5, 0.0, 1.0);
+            winding_number = winding_number + clamp(input.pixels_per_em * x1 + 0.5, 0.0, 1.0);
         }
 
         if res > 1u {
             let x2 = (a.x * t2 - 2.0 * b.x) * t2 + c.x;
-            winding_number = winding_number - clamp(font_info.pixels_per_em * x2 + 0.5, 0.0, 1.0);
+            winding_number = winding_number - clamp(input.pixels_per_em * x2 + 0.5, 0.0, 1.0);
         }
 
         continuing {
@@ -111,7 +129,8 @@ fn fs_main(@location(0) input: vec2<f32>) -> @location(0) vec4<f32> {
     if winding_number > epsilon {
         return vec4<f32>(temp_color, winding_number);
     } else {
-        let my_number = vec2<u32>(u32(1.05), u32(1.7));
+        let float_number = vec2<f32>(1.05, 1.7);
+        let my_number = vec2<u32>(float_number);
         if (my_number.x == 1u) && (my_number.y == 1u) {
             return vec4<f32>(0.2, 0.7, 0.2, 1.0);
         } else {

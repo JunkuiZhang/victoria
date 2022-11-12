@@ -20,6 +20,7 @@ fn main() {
         .build(&event_loop)
         .unwrap();
     let mut controller = Controller::new(&window, game_settings);
+    controller.preprocess();
     event_loop.run(move |event, _, control_flow| {
         control_flow.set_poll();
         match event {

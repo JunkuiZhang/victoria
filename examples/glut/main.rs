@@ -19,4 +19,8 @@ fn main() {
         "Char len: {}",
         std::mem::size_of_val(&s2.chars().nth(0).unwrap())
     );
+
+    let s = "my_font.ttf";
+    let t: Vec<&str> = s.split('.').collect();
+    println!("{:?}", t);
 }

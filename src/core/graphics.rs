@@ -13,6 +13,7 @@ pub struct Graphics {
     indices_buffer: wgpu::Buffer,
     num: u32,
     font_data_bindgroup: wgpu::BindGroup,
+    string_vec_buffer: wgpu::Buffer,
 }
 
 #[cfg(windows)]
@@ -78,23 +79,11 @@ impl Graphics {
         let font_height =
             font_rect[1] / units_per_em * pixels_per_em / settings.get_window_height() as f32;
         let verteices = [
-            [font_width * (-0.5), font_height * 0.5, 0.0],
-            [font_width * (-0.5), font_height * (-0.5), 0.0],
-            [font_width * 0.5, font_height * 0.5, 0.0],
-            [font_width * 0.5, font_height * (-0.5), 0.0],
+            [0.0f32, 1.0, 0.0],
+            [0.0, 0.0, 0.0],
+            [1.0, 1.0, 0.0],
+            [1.0, 0.0, 0.0],
         ];
-        println!("{:?}", verteices);
-        let font_info = [
-            pixels_per_em,
-            units_per_em,
-            settings.get_window_width() as f32,
-            settings.get_window_height() as f32,
-            font_width * (-0.5),
-            font_height * (-0.5),
-            font_rect[2],
-            font_rect[3],
-        ];
-        println!("{:?}", font_info);
         let indices = [0u16, 1, 2, 2, 1, 3];
         let font_vertices = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Font Bounding Box Vertex"),
@@ -112,19 +101,39 @@ impl Graphics {
             step_mode: wgpu::VertexStepMode::Vertex,
             attributes: &wgpu::vertex_attr_array![0 => Float32x3],
         };
+        let (string_vec_stride, string_vec_size, string_vec) = font_manager.get_string_vec();
+        let string_vec_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("String Vec Buffer"),
+            contents: bytemuck::cast_slice(string_vec),
+            usage: wgpu::BufferUsages::VERTEX,
+        });
+        let string_vec_buffer_layout = wgpu::VertexBufferLayout {
+            array_stride: string_vec_stride,
+            step_mode: wgpu::VertexStepMode::Instance,
+            attributes: &wgpu::vertex_attr_array![1 => Uint32, 2 => Float32x2, 3 => Float32],
+        };
 
+        let (font_data_mem_size, font_data_size, font_data) = font_manager.get_font_data();
+        println!("{:?}", font_data);
+        println!("==================================");
+        let (font_texture_size, font_curves) = font_manager.get_font_curves();
+        println!("{:?}", font_curves);
+        println!("==================================");
+        let (font_ordering_size, font_ordering_list) = font_manager.get_font_curve_ordering_list();
+        println!("{:?}", font_ordering_list);
+        println!("==================================");
         let font_bindgroup_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: Some("X Curve List"),
+                label: Some("Font Data"),
                 entries: &[
                     wgpu::BindGroupLayoutEntry {
                         binding: 0,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
                         ty: wgpu::BindingType::Buffer {
                             ty: wgpu::BufferBindingType::Storage { read_only: true },
                             has_dynamic_offset: false,
                             min_binding_size: wgpu::BufferSize::new(
-                                (std::mem::size_of::<f32>() * font_info.len()) as _,
+                                (font_data_mem_size * font_data_size) as _,
                             ),
                         },
                         count: None,
@@ -136,7 +145,19 @@ impl Graphics {
                             ty: wgpu::BufferBindingType::Storage { read_only: true },
                             has_dynamic_offset: false,
                             min_binding_size: wgpu::BufferSize::new(
-                                (font_curves.len() * std::mem::size_of::<[f32; 2]>() * 4) as _,
+                                (font_texture_size * std::mem::size_of::<[f32; 4]>()) as _,
+                            ),
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 2,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Buffer {
+                            ty: wgpu::BufferBindingType::Storage { read_only: true },
+                            has_dynamic_offset: false,
+                            min_binding_size: wgpu::BufferSize::new(
+                                (font_ordering_size * std::mem::size_of::<u32>()) as _,
                             ),
                         },
                         count: None,
@@ -145,12 +166,17 @@ impl Graphics {
             });
         let font_info_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Font Rect Buffer"),
-            contents: bytemuck::cast_slice(&font_info),
-            usage: wgpu::BufferUsages::STORAGE,
+            contents: bytemuck::cast_slice(font_data),
+            usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::STORAGE,
         });
         let font_curves_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Glyph Curve Buffer"),
-            contents: bytemuck::cast_slice(&font_curves),
+            contents: bytemuck::cast_slice(font_curves),
+            usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::STORAGE,
+        });
+        let font_ordering_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Glyph Curve Ordering Buffer"),
+            contents: bytemuck::cast_slice(font_ordering_list),
             usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::STORAGE,
         });
         let font_data_bindgroup = device.create_bind_group(&wgpu::BindGroupDescriptor {
@@ -165,12 +191,17 @@ impl Graphics {
                     binding: 1,
                     resource: font_curves_buffer.as_entire_binding(),
                 },
+                wgpu::BindGroupEntry {
+                    binding: 2,
+                    resource: font_ordering_buffer.as_entire_binding(),
+                },
             ],
         });
 
         let rp_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("Renderpipeline Layout"),
             bind_group_layouts: &[&font_bindgroup_layout],
+            // bind_group_layouts: &[],
             push_constant_ranges: &[],
         });
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
@@ -179,7 +210,7 @@ impl Graphics {
             vertex: wgpu::VertexState {
                 module: &draw_shader,
                 entry_point: "vs_main",
-                buffers: &[vertex_buffer_layout],
+                buffers: &[vertex_buffer_layout, string_vec_buffer_layout],
             },
             primitive: wgpu::PrimitiveState {
                 topology: wgpu::PrimitiveTopology::TriangleList,
@@ -213,6 +244,7 @@ impl Graphics {
             indices_buffer: font_indices,
             num: num_font_indices as u32,
             font_data_bindgroup,
+            string_vec_buffer,
         }
     }
 
@@ -254,6 +286,7 @@ impl Graphics {
             let mut render_pass = command_encoder.begin_render_pass(&render_pass_desc);
             render_pass.set_pipeline(&self.render_pipeline);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+            render_pass.set_vertex_buffer(1, self.string_vec_buffer.slice(..));
             render_pass.set_index_buffer(self.indices_buffer.slice(..), wgpu::IndexFormat::Uint16);
             render_pass.set_bind_group(0, &self.font_data_bindgroup, &[]);
             render_pass.draw_indexed(0..self.num, 0, 0..1);
