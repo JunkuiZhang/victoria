@@ -145,7 +145,7 @@ impl Graphics {
                             ty: wgpu::BufferBindingType::Storage { read_only: true },
                             has_dynamic_offset: false,
                             min_binding_size: wgpu::BufferSize::new(
-                                (font_ordering_size * std::mem::size_of::<u32>()) as _,
+                                (font_ordering_size * std::mem::size_of::<u16>()) as _,
                             ),
                         },
                         count: None,

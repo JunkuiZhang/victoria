@@ -16,7 +16,7 @@ pub struct FontManager {
     // rgba f32
     font_curves: Vec<[f32; 4]>,
     // rgba u32
-    font_curve_ordering_list: Vec<u32>,
+    font_curve_ordering_list: Vec<u16>,
     string_vec: Vec<CharData>,
 }
 
@@ -104,10 +104,15 @@ impl FontManager {
             }
             curve_info_data
                 .sort_by(|(_, max_num0), (_, max_num2)| max_num2.partial_cmp(max_num0).unwrap());
+
+            self.font_curve_ordering_list.push(0);
             self.font_curve_ordering_list
-                .push(curve_info_data.len() as u32);
+                .push(curve_info_data.len() as u16);
             for (index, _) in curve_info_data.iter() {
-                self.font_curve_ordering_list.push(*index as u32);
+                let width_num = *index / 4096;
+                let height_num = *index % 4096;
+                self.font_curve_ordering_list.push(width_num as u16);
+                self.font_curve_ordering_list.push(height_num as u16);
             }
             ordering_index += curve_info_data.len() + 1;
         }
@@ -140,7 +145,7 @@ impl FontManager {
         (self.font_curves.len(), &self.font_curves)
     }
 
-    pub fn get_font_curve_ordering_list(&self) -> (usize, &Vec<u32>) {
+    pub fn get_font_curve_ordering_list(&self) -> (usize, &Vec<u16>) {
         (
             self.font_curve_ordering_list.len(),
             &self.font_curve_ordering_list,
