@@ -79,9 +79,9 @@ fn fs_main(input: FragmengInput) -> @location(0) vec4<f32> {
             break;
         }
         let curve_index_data = curve_orders[glyph_data.curve_info_index + x + 1u];
-        let curve_index_width = curve_index_data >> 16u;
-        let curve_index_height = curve_index_data & 0xFFFFu;
-        let curve_index = curve_index_width + curve_index_height * 4096u;
+        let curve_index_row_num = curve_index_data >> 16u;
+        let curve_index_col_num = curve_index_data & 0xFFFFu;
+        let curve_index = curve_index_col_num + curve_index_row_num * 4096u;
         let point0 = font_curves[curve_index - 1u].p2 - pixel;
         let origin_data = font_curves[curve_index - 1u].p2;
         if origin_data.x < 0.0 || origin_data.y < 0.0 {
