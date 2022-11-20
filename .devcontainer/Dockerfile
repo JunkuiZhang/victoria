@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/devcontainers/cpp:0-debian-11
+FROM mcr.microsoft.com/devcontainers/cpp:0-ubuntu-22.04
 
 ARG REINSTALL_CMAKE_VERSION_FROM_SOURCE="3.22.2"
 
