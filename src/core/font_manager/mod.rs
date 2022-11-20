@@ -109,7 +109,7 @@ impl FontManager {
                 .push(curve_info_data.len() as u32);
             for (index, _) in curve_info_data.iter() {
                 let row_num = (*index / 4096) << 16;
-                let col_num = (*index % 4096);
+                let col_num = *index % 4096;
                 self.font_curve_ordering_list
                     .push((row_num | col_num) as u32);
             }
