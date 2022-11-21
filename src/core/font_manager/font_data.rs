@@ -5,8 +5,8 @@ use owned_ttf_parser::Rect;
 pub struct FontData {
     pub curve_texel_index: u32,
     pub curve_info_index: u32,
-    width_over_height: f32,
     width_in_em: f32,
+    height_in_em: f32,
 }
 
 impl FontData {
@@ -21,8 +21,8 @@ impl FontData {
         FontData {
             curve_texel_index: glyph_start as u32,
             curve_info_index: data_start as u32,
-            width_over_height: width / height,
-            width_in_em: width + 0.2,
+            width_in_em: width,
+            height_in_em: height,
         }
     }
 
@@ -30,8 +30,8 @@ impl FontData {
         FontData {
             curve_texel_index: 0,
             curve_info_index: 0,
-            width_over_height: -10.0,
             width_in_em: -10.0,
+            height_in_em: -10.0,
         }
     }
 }

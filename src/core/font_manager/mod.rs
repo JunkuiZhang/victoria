@@ -56,8 +56,8 @@ impl FontManager {
             // processing
             let mut last_x = 0.0;
             let mut last_y = 0.0;
-            let origin_x = bounding_box.x_min as f32 / units_per_em - 0.1; // -0.1 for padding
-            let origin_y = bounding_box.y_min as f32 / units_per_em - 0.1;
+            let origin_x = bounding_box.x_min as f32 / units_per_em; // -0.1 for padding
+            let origin_y = bounding_box.y_min as f32 / units_per_em;
             let this_char_curve_start = curves_index;
             self.font_data.push(FontData::new(
                 this_char_curve_start,
@@ -125,7 +125,7 @@ impl FontManager {
         let face = self.font_face.as_face_ref();
         let mut last_width = 0.0;
         let mut x_drift = -0.8;
-        for this_char in "Hello".chars().enumerate() {
+        for this_char in "Hi.!".chars().enumerate() {
             let glyph_index = face.glyph_index(this_char.1).unwrap();
             println!("Draw {} with id: {}", this_char.1, glyph_index.0);
             let info = face.glyph_bounding_box(glyph_index).unwrap();
