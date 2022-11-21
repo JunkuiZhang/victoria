@@ -19,8 +19,8 @@ pub struct Graphics {
 
 #[cfg(windows)]
 fn get_backend() -> wgpu::Backends {
-    wgpu::Backends::DX12
-    // wgpu::Backends::PRIMARY
+    // wgpu::Backends::DX12
+    wgpu::Backends::VULKAN
 }
 
 #[cfg(not(windows))]

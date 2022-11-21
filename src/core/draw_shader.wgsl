@@ -65,7 +65,7 @@ fn fs_main(input: FragmengInput) -> @location(0) vec4<f32> {
     if glyph_data.width_over_height < 0.0 {
         return vec4<f32>(0.0, 0.0, 0.0, 0.0);
     }
-    let total = curve_orders[glyph_data.curve_texel_index];
+    let total = curve_orders[glyph_data.curve_info_index];
     // transform to em coordinate system
     let pixel = input.position;
 
@@ -78,10 +78,12 @@ fn fs_main(input: FragmengInput) -> @location(0) vec4<f32> {
         if x >= total {
             break;
         }
-        let curve_index_data = curve_orders[glyph_data.curve_info_index + x + 1u];
-        let curve_index_row_num = curve_index_data >> 16u;
-        let curve_index_col_num = curve_index_data & 0xFFFFu;
-        let curve_index = curve_index_col_num + curve_index_row_num * 4096u;
+        // let curve_index_data = curve_orders[glyph_data.curve_info_index + x + 1u];
+        // let curve_index_row_num = curve_index_data >> 16u;
+        // let curve_index_col_num = curve_index_data & 0xFFFFu;
+        // let curve_index = curve_index_col_num + curve_index_row_num * 4096u;
+        let curve_index_offset = curve_orders[glyph_data.curve_info_index + x + 1u];
+        let curve_index = curve_index_offset + glyph_data.curve_texel_index;
         let point0 = font_curves[curve_index - 1u].p2 - pixel;
         let origin_data = font_curves[curve_index - 1u].p2;
         if origin_data.x < 0.0 || origin_data.y < 0.0 {
@@ -146,8 +148,6 @@ fn fs_main(input: FragmengInput) -> @location(0) vec4<f32> {
     if winding_number > epsilon {
         return vec4<f32>(temp_color, winding_number);
     } else {
-        let float_number = vec2<f32>(1.05, 1.7);
-        let my_number = vec2<u32>(float_number);
         if indicator {
             return vec4<f32>(0.7, 0.2, 0.2, 1.0);
         } else {

@@ -16,13 +16,13 @@ impl FontData {
         glyph_rect: &Rect,
         units_per_em: f32,
     ) -> Self {
-        let width = glyph_rect.width() as f32 / units_per_em + 0.2;
-        let height = glyph_rect.height() as f32 / units_per_em + 0.2;
+        let width = glyph_rect.width() as f32 / units_per_em;
+        let height = glyph_rect.height() as f32 / units_per_em;
         FontData {
             curve_texel_index: glyph_start as u32,
             curve_info_index: data_start as u32,
             width_over_height: width / height,
-            width_in_em: width,
+            width_in_em: width + 0.2,
         }
     }
 

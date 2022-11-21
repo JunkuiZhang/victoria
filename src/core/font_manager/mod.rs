@@ -58,8 +58,9 @@ impl FontManager {
             let mut last_y = 0.0;
             let origin_x = bounding_box.x_min as f32 / units_per_em - 0.1; // -0.1 for padding
             let origin_y = bounding_box.y_min as f32 / units_per_em - 0.1;
+            let this_char_curve_start = curves_index;
             self.font_data.push(FontData::new(
-                curves_index,
+                this_char_curve_start,
                 ordering_index,
                 &bounding_box,
                 units_per_em,
@@ -81,7 +82,8 @@ impl FontManager {
                         self.font_curves.push([x1, y1, x2, y2]);
                         // let minx = min_3number(last_x, x1, x2);
                         let maxx = max_3number(last_x, x1, x2);
-                        curve_info_data.push((self.font_curves.len() - 1, maxx));
+                        let this_char_glyph_offset = curves_index - this_char_curve_start;
+                        curve_info_data.push((this_char_glyph_offset, maxx));
                         last_x = x2;
                         last_y = y2;
                         curves_index += 1;
@@ -93,7 +95,8 @@ impl FontManager {
                         let y2 = b / units_per_em - origin_y;
                         self.font_curves.push([x1, y1, x2, y2]);
                         let maxx = max_3number(last_x, x1, x2);
-                        curve_info_data.push((self.font_curves.len() - 1, maxx));
+                        let this_char_glyph_offset = curves_index - this_char_curve_start;
+                        curve_info_data.push((this_char_glyph_offset, maxx));
                         last_x = x2;
                         last_y = y2;
                         curves_index += 1;
@@ -107,11 +110,12 @@ impl FontManager {
 
             self.font_curve_ordering_list
                 .push(curve_info_data.len() as u32);
-            for (index, _) in curve_info_data.iter() {
-                let row_num = (*index / 4096) << 16;
-                let col_num = *index % 4096;
-                self.font_curve_ordering_list
-                    .push((row_num | col_num) as u32);
+            for (offset, _) in curve_info_data.iter() {
+                // let row_num = (*index / 4096) << 16;
+                // let col_num = *index % 4096;
+                // self.font_curve_ordering_list
+                //     .push((row_num | col_num) as u32);
+                self.font_curve_ordering_list.push(*offset as u32);
             }
             ordering_index += curve_info_data.len() + 1;
         }
@@ -123,6 +127,7 @@ impl FontManager {
         let mut x_drift = -0.8;
         for this_char in "Hello".chars().enumerate() {
             let glyph_index = face.glyph_index(this_char.1).unwrap();
+            println!("Draw {} with id: {}", this_char.1, glyph_index.0);
             let info = face.glyph_bounding_box(glyph_index).unwrap();
             x_drift += last_width / 768.0 * 2.0 + 0.1;
             self.string_vec
