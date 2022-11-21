@@ -129,7 +129,7 @@ impl FontManager {
             let glyph_index = face.glyph_index(this_char.1).unwrap();
             println!("Draw {} with id: {}", this_char.1, glyph_index.0);
             let info = face.glyph_bounding_box(glyph_index).unwrap();
-            x_drift += last_width / 768.0 * 2.0 + 0.1;
+            x_drift += last_width / 768.0 * 2.0 * 1.05;
             self.string_vec
                 .push(CharData::new(glyph_index.0 as u32, 200.0, [x_drift, -0.3]));
             last_width = info.width() as f32 / 1000.0 * 200.0;
