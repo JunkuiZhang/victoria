@@ -34,7 +34,6 @@ pub struct GameSettings {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct GameEngineSettings {
     window_title: String,
-    font_texture_width: u32,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
@@ -97,11 +96,6 @@ impl GameSettings {
     pub fn get_window_title(&self) -> &str {
         self.engine_settings.window_title.as_str()
     }
-
-    #[inline]
-    pub fn get_font_texture_width(&self) -> u32 {
-        self.engine_settings.font_texture_width
-    }
 }
 
 impl GamePlayerSettings {
@@ -117,7 +111,6 @@ impl GameEngineSettings {
     pub fn new() -> Self {
         GameEngineSettings {
             window_title: "My Game".into(),
-            font_texture_width: 4096,
         }
     }
 }
