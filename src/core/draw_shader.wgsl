@@ -152,8 +152,8 @@ fn fs_main(input: FragmengInput) -> @location(0) vec4<f32> {
         if indicator {
             return vec4<f32>(0.7, 0.2, 0.2, 1.0);
         } else {
-            return vec4<f32>(0.2, 0.7, 0.2, 1.0);
-            // return vec4<f32>(0.0, 0.0, 0.0, 0.0);
+            // return vec4<f32>(0.2, 0.7, 0.2, 1.0);
+            return vec4<f32>(0.0, 0.0, 0.0, 0.0);
         }
     }
     // return vec4<f32>(1.0, 0.7, 0.5, 1.0);

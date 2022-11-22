@@ -125,14 +125,21 @@ impl FontManager {
         let face = self.font_face.as_face_ref();
         let mut last_width = 0.0;
         let mut x_drift = -0.8;
-        for this_char in "Hi.!".chars().enumerate() {
+        for this_char in "ab17.=".chars().enumerate() {
             let glyph_index = face.glyph_index(this_char.1).unwrap();
-            println!("Draw {} with id: {}", this_char.1, glyph_index.0);
             let info = face.glyph_bounding_box(glyph_index).unwrap();
             x_drift += last_width / 768.0 * 2.0 * 1.05;
-            self.string_vec
-                .push(CharData::new(glyph_index.0 as u32, 200.0, [x_drift, -0.3]));
-            last_width = info.width() as f32 / 1000.0 * 200.0;
+            let y_drift = info.y_min as f32 / face.units_per_em() as f32 * 200.0 / 768.0 * 2.0;
+            println!(
+                "Draw {} with id {}: y {}",
+                this_char.1, glyph_index.0, y_drift
+            );
+            self.string_vec.push(CharData::new(
+                glyph_index.0 as u32,
+                200.0,
+                [x_drift, -0.3 + y_drift],
+            ));
+            last_width = info.width() as f32 / face.units_per_em() as f32 * 200.0;
             println!("Last width: {}", last_width / 768.0 * 2.0);
         }
     }
