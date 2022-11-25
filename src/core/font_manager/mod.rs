@@ -18,10 +18,15 @@ pub struct FontManager {
     // rgba u32
     font_curve_ordering_list: Vec<u32>,
     string_vec: Vec<CharData>,
+    window_size: [f32; 2],
 }
 
 impl FontManager {
-    pub fn new<P: AsRef<std::path::Path>>(font_path: P) -> Self {
+    pub fn new<P: AsRef<std::path::Path>>(
+        font_path: P,
+        window_width: u32,
+        window_height: u32,
+    ) -> Self {
         let font_file = std::fs::read(font_path).expect("Unable to read font!");
         let font_face = owned_ttf_parser::OwnedFace::from_vec(font_file, 0).unwrap();
         FontManager {
@@ -30,6 +35,7 @@ impl FontManager {
             font_curves: Vec::new(),
             font_curve_ordering_list: Vec::new(),
             string_vec: Vec::new(),
+            window_size: [window_width as f32, window_height as f32],
         }
     }
 
@@ -128,19 +134,16 @@ impl FontManager {
         for this_char in "ab17.=".chars().enumerate() {
             let glyph_index = face.glyph_index(this_char.1).unwrap();
             let info = face.glyph_bounding_box(glyph_index).unwrap();
-            x_drift += last_width / 768.0 * 2.0 * 1.05;
-            let y_drift = info.y_min as f32 / face.units_per_em() as f32 * 200.0 / 768.0 * 2.0;
-            println!(
-                "Draw {} with id {}: y {}",
-                this_char.1, glyph_index.0, y_drift
-            );
+            x_drift += last_width / self.window_size[0] * 2.0 * 1.05;
+            let y_drift =
+                info.y_min as f32 / face.units_per_em() as f32 * 200.0 / self.window_size[1] * 2.0;
+            println!("Draw {} with id {}", this_char.1, glyph_index.0);
             self.string_vec.push(CharData::new(
                 glyph_index.0 as u32,
                 200.0,
                 [x_drift, -0.3 + y_drift],
             ));
             last_width = info.width() as f32 / face.units_per_em() as f32 * 200.0;
-            println!("Last width: {}", last_width / 768.0 * 2.0);
         }
     }
 

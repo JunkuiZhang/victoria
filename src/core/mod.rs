@@ -23,7 +23,11 @@ pub struct Controller {
 impl Controller {
     pub fn new(window: &winit::window::Window, game_settings: Box<GameSettings>) -> Self {
         let font_path = Path::new("data").join("chi1.ttf");
-        let mut font_manager = FontManager::new(font_path);
+        let mut font_manager = FontManager::new(
+            font_path,
+            game_settings.get_window_width(),
+            game_settings.get_window_height(),
+        );
         font_manager.preprocess_font();
         font_manager.set_text();
         let graphics = Graphics::new(window, &game_settings, &font_manager);
