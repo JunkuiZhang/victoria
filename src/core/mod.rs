@@ -4,12 +4,13 @@ use crate::settings::GameSettings;
 
 use self::{
     font_manager::FontManager, game_time::GameTimeManager, graphics::Graphics,
-    user_input::UserInput,
+    gui_manager::GuiManager, user_input::UserInput,
 };
 
 mod font_manager;
 mod game_time;
 mod graphics;
+mod gui_manager;
 mod user_input;
 
 pub struct Controller {
@@ -18,6 +19,7 @@ pub struct Controller {
     input: UserInput,
     time_manager: GameTimeManager,
     font_manager: FontManager,
+    gui_manager: GuiManager,
 }
 
 impl Controller {
@@ -30,6 +32,10 @@ impl Controller {
         );
         font_manager.preprocess_font();
         font_manager.set_text();
+        let gui_manager = GuiManager::new(
+            game_settings.get_window_width(),
+            game_settings.get_window_height(),
+        );
         let graphics = Graphics::new(window, &game_settings, &font_manager);
         let input = UserInput::new();
 
@@ -39,6 +45,7 @@ impl Controller {
             input,
             time_manager: GameTimeManager::new(),
             font_manager,
+            gui_manager,
         }
     }
 
