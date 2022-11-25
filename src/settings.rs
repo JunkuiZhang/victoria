@@ -33,12 +33,15 @@ pub struct GameSettings {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct GameEngineSettings {
+    #[serde(default)]
     window_title: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 struct GamePlayerSettings {
+    #[serde(default)]
     window_width: u32,
+    #[serde(default)]
     window_height: u32,
 }
 
@@ -111,6 +114,24 @@ impl GameEngineSettings {
     pub fn new() -> Self {
         GameEngineSettings {
             window_title: "My Game".into(),
+        }
+    }
+}
+
+// https://serde.rs/attr-default.html
+impl Default for GamePlayerSettings {
+    fn default() -> Self {
+        Self {
+            window_width: 800,
+            window_height: 600,
+        }
+    }
+}
+
+impl Default for GameEngineSettings {
+    fn default() -> Self {
+        Self {
+            window_title: "Game".into(),
         }
     }
 }
