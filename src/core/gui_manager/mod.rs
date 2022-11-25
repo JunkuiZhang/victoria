@@ -8,4 +8,6 @@ impl GuiManager {
             window_size: [window_width as f32, window_height as f32],
         }
     }
+
+    pub fn add_text(&self, _content: String) {}
 }
