@@ -24,13 +24,34 @@ fn main() {
     event_loop.run(move |event, _, control_flow| {
         control_flow.set_poll();
         match event {
-            winit::event::Event::WindowEvent {
-                event: winit::event::WindowEvent::CloseRequested,
-                ..
-            } => {
-                controller.exit();
-                control_flow.set_exit();
-            }
+            winit::event::Event::WindowEvent { event, .. } => match event {
+                winit::event::WindowEvent::CloseRequested => {
+                    controller.exit();
+                    control_flow.set_exit();
+                }
+                winit::event::WindowEvent::KeyboardInput {
+                    input:
+                        winit::event::KeyboardInput {
+                            state,
+                            virtual_keycode: Some(keycode),
+                            ..
+                        },
+                    ..
+                } => match keycode {
+                    winit::event::VirtualKeyCode::Escape => {
+                        controller.exit();
+                        control_flow.set_exit();
+                    }
+                    _ => {}
+                },
+                // TODO: impl these
+                // winit::event::WindowEvent::ReceivedCharacter(_) => todo!(),
+                // winit::event::WindowEvent::ModifiersChanged(_) => todo!(),
+                // winit::event::WindowEvent::CursorMoved { position, .. } => todo!(),
+                // winit::event::WindowEvent::MouseWheel { delta, phase, .. } => todo!(),
+                // winit::event::WindowEvent::MouseInput { state, button, .. } => todo!(),
+                _ => {}
+            },
             winit::event::Event::MainEventsCleared => {
                 // Update here
                 controller.update();
