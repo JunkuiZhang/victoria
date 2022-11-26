@@ -22,7 +22,6 @@ fn main() {
     let mut controller = Controller::new(&window, game_settings);
     controller.preprocess();
     event_loop.run(move |event, _, control_flow| {
-        control_flow.set_poll();
         match event {
             winit::event::Event::WindowEvent { event, .. } => match event {
                 winit::event::WindowEvent::CloseRequested => {
