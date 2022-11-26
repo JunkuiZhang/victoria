@@ -31,10 +31,13 @@ struct CurveInfo {
 };
 
 @group(0) @binding(0)
+var<uniform> window_size: vec2<f32>;
+
+@group(1) @binding(0)
 var<storage, read> font_info: array<GlyphData>;
-@group(0) @binding(1)
+@group(1) @binding(1)
 var<storage, read> font_curves: array<CurveInfo>;
-@group(0) @binding(2)
+@group(1) @binding(2)
 var<storage, read> curve_orders: array<u32>;
 
 @vertex
@@ -42,8 +45,8 @@ fn vs_main(input: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     out.glyph_id = input.glyph_id;
     // column left to right
-    let multiplier_x = input.pixels_per_em / 1920.0 * 2.0;
-    let multiplier_y = input.pixels_per_em / 1080.0 * 2.0;
+    let multiplier_x = input.pixels_per_em / window_size.x * 2.0;
+    let multiplier_y = input.pixels_per_em / window_size.y * 2.0;
     let this_char_info = font_info[input.glyph_id];
     let scale_x = multiplier_x * this_char_info.width_in_em;
     let scale_y = multiplier_y * this_char_info.height_in_em;

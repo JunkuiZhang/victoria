@@ -12,6 +12,7 @@ pub struct Graphics {
     vertex_buffer: wgpu::Buffer,
     indices_buffer: wgpu::Buffer,
     num: u32,
+    uniform_bindgroup: wgpu::BindGroup,
     font_data_bindgroup: wgpu::BindGroup,
     string_vec_buffer: wgpu::Buffer,
     string_len: u32,
@@ -107,6 +108,40 @@ impl Graphics {
             attributes: &wgpu::vertex_attr_array![1 => Uint32, 2 => Float32x2, 3 => Float32],
         };
 
+        let window_size = [
+            settings.get_window_width() as f32,
+            settings.get_window_height() as f32,
+        ];
+        let window_info_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Window Size Info"),
+            contents: bytemuck::cast_slice(&window_size),
+            usage: wgpu::BufferUsages::UNIFORM,
+        });
+        let uniform_bindgroup_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("Uniform Bindgroup"),
+                entries: &[wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::VERTEX,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: wgpu::BufferSize::new(
+                            std::mem::size_of::<[f32; 2]>() as _
+                        ),
+                    },
+                    count: None,
+                }],
+            });
+        let uniform_bindgroup = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("Uniform Bindgroup"),
+            layout: &uniform_bindgroup_layout,
+            entries: &[wgpu::BindGroupEntry {
+                binding: 0,
+                resource: window_info_buffer.as_entire_binding(),
+            }],
+        });
+
         let (font_data_mem_size, font_data_size, font_data) = font_manager.get_font_data();
         let (font_texture_size, font_curves) = font_manager.get_font_curves();
         let (font_ordering_size, font_ordering_list) = font_manager.get_font_curve_ordering_list();
@@ -188,8 +223,7 @@ impl Graphics {
 
         let rp_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("Renderpipeline Layout"),
-            bind_group_layouts: &[&font_bindgroup_layout],
-            // bind_group_layouts: &[],
+            bind_group_layouts: &[&uniform_bindgroup_layout, &font_bindgroup_layout],
             push_constant_ranges: &[],
         });
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
@@ -231,6 +265,7 @@ impl Graphics {
             vertex_buffer: font_vertices,
             indices_buffer: font_indices,
             num: num_font_indices as u32,
+            uniform_bindgroup,
             font_data_bindgroup,
             string_vec_buffer,
             string_len: string_vec_size as u32,
@@ -277,7 +312,8 @@ impl Graphics {
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             render_pass.set_vertex_buffer(1, self.string_vec_buffer.slice(..));
             render_pass.set_index_buffer(self.indices_buffer.slice(..), wgpu::IndexFormat::Uint16);
-            render_pass.set_bind_group(0, &self.font_data_bindgroup, &[]);
+            render_pass.set_bind_group(0, &self.uniform_bindgroup, &[]);
+            render_pass.set_bind_group(1, &self.font_data_bindgroup, &[]);
             render_pass.draw_indexed(0..self.num, 0, 0..self.string_len);
         }
 
