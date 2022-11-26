@@ -96,8 +96,8 @@ impl GameSettings {
     }
 
     #[inline]
-    pub fn get_window_title(&self) -> &str {
-        self.engine_settings.window_title.as_str()
+    pub fn get_window_title(&self) -> String {
+        self.engine_settings.window_title.clone()
     }
 }
 
