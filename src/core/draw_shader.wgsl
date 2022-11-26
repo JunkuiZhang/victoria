@@ -42,17 +42,19 @@ fn vs_main(input: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     out.glyph_id = input.glyph_id;
     // column left to right
-    let multiplier = input.pixels_per_em / 768.0 * 2.0;
+    let multiplier_x = input.pixels_per_em / 1920.0 * 2.0;
+    let multiplier_y = input.pixels_per_em / 1080.0 * 2.0;
     let this_char_info = font_info[input.glyph_id];
-    let scale_y = multiplier * this_char_info.height_in_em;
-    let scale_x = multiplier * this_char_info.width_in_em;
+    let scale_x = multiplier_x * this_char_info.width_in_em;
+    let scale_y = multiplier_y * this_char_info.height_in_em;
     let scale_mat = mat3x3<f32>(scale_x, 0.0, 0.0, 0.0, scale_y, 0.0, 0.0, 0.0, 1.0);
     let pos_scaled = scale_mat * input.position;
     let move_mat = vec3<f32>(input.base_line.x, input.base_line.y, 0.0);
     out.pos = vec4<f32>(pos_scaled + move_mat, 1.0);
-    let transform_mul = this_char_info.height_in_em / scale_y;
-    out.xy = pos_scaled.xy * transform_mul;
-    // out.xy = pos_scaled.xy / vec2<f32>(scale_x, scale_y);
+    // Equivlent to the following 2 lines:
+    // let transform_mul = vec2<f32>(this_char_info.width_in_em / scale_x, this_char_info.height_in_em / scale_y);
+    // out.xy = pos_scaled.xy * transform_mul;
+    out.xy = pos_scaled.xy / vec2<f32>(multiplier_x, multiplier_y);
     out.pixels_per_em = input.pixels_per_em;
     return out;
 }
