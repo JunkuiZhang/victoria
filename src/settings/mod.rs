@@ -1,6 +1,10 @@
+mod window_setting;
+
 use std::path::Path;
 
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
+
+use self::window_setting::{window_title, WindowSetting};
 
 const PLAYER_SETTING_FILE: &str = "player_setting.toml";
 const ENGINE_SETTING_FILE: &str = "engine_setting.toml";
@@ -33,16 +37,14 @@ pub struct GameSettings {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct GameEngineSettings {
-    #[serde(default)]
+    #[serde(default = "window_title")]
     window_title: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 struct GamePlayerSettings {
     #[serde(default)]
-    window_width: u32,
-    #[serde(default)]
-    window_height: u32,
+    window_setting: WindowSetting,
 }
 
 impl GameSettings {
@@ -58,8 +60,8 @@ impl GameSettings {
         } else {
             GameSettings {
                 has_changed: true,
-                engine_settings: GameEngineSettings::new(),
-                player_settings: GamePlayerSettings::new(),
+                engine_settings: GameEngineSettings::default(),
+                player_settings: GamePlayerSettings::default(),
             }
         }
     }
@@ -87,12 +89,12 @@ impl GameSettings {
 
     #[inline]
     pub fn get_window_width(&self) -> u32 {
-        self.player_settings.window_width
+        self.player_settings.window_setting.0
     }
 
     #[inline]
     pub fn get_window_height(&self) -> u32 {
-        self.player_settings.window_height
+        self.player_settings.window_setting.1
     }
 
     #[inline]
@@ -101,29 +103,11 @@ impl GameSettings {
     }
 }
 
-impl GamePlayerSettings {
-    pub fn new() -> Self {
-        GamePlayerSettings {
-            window_width: 800,
-            window_height: 600,
-        }
-    }
-}
-
-impl GameEngineSettings {
-    pub fn new() -> Self {
-        GameEngineSettings {
-            window_title: "My Game".into(),
-        }
-    }
-}
-
 // https://serde.rs/attr-default.html
 impl Default for GamePlayerSettings {
     fn default() -> Self {
         Self {
-            window_width: 800,
-            window_height: 600,
+            window_setting: WindowSetting::default(),
         }
     }
 }
@@ -131,7 +115,7 @@ impl Default for GamePlayerSettings {
 impl Default for GameEngineSettings {
     fn default() -> Self {
         Self {
-            window_title: "Game".into(),
+            window_title: window_title(),
         }
     }
 }
