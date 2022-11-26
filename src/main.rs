@@ -32,7 +32,7 @@ fn main() {
                 winit::event::WindowEvent::KeyboardInput {
                     input:
                         winit::event::KeyboardInput {
-                            state,
+                            state: winit::event::ElementState::Pressed,
                             virtual_keycode: Some(keycode),
                             ..
                         },
