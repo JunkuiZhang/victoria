@@ -17,6 +17,7 @@ fn main() {
         ))
         .with_title(game_settings.get_window_title())
         .with_resizable(false)
+        .with_fullscreen(Some(winit::window::Fullscreen::Borderless(None)))
         .build(&event_loop)
         .unwrap();
     let mut controller = Controller::new(&window, game_settings);
