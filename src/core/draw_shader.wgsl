@@ -44,12 +44,13 @@ var<storage, read> curve_orders: array<u32>;
 fn vs_main(input: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     out.glyph_id = input.glyph_id;
-    // column left to right
-    let multiplier_x = input.pixels_per_em / window_size.x * 2.0;
-    let multiplier_y = input.pixels_per_em / window_size.y * 2.0;
+    // Equivlent to:
+    // let multiplier_x = input.pixels_per_em / window_size.x * 2.0;
+    // let multiplier_y = input.pixels_per_em / window_size.y * 2.0;
+    let multiplier = input.pixels_per_em * 2.0 / window_size;
     let this_char_info = font_info[input.glyph_id];
-    let scale_x = multiplier_x * this_char_info.width_in_em;
-    let scale_y = multiplier_y * this_char_info.height_in_em;
+    let scale_x = multiplier.x * this_char_info.width_in_em;
+    let scale_y = multiplier.y * this_char_info.height_in_em;
     let scale_mat = mat3x3<f32>(scale_x, 0.0, 0.0, 0.0, scale_y, 0.0, 0.0, 0.0, 1.0);
     let pos_scaled = scale_mat * input.position;
     let move_mat = vec3<f32>(input.base_line.x, input.base_line.y, 0.0);
@@ -57,7 +58,7 @@ fn vs_main(input: VertexInput) -> VertexOutput {
     // Equivlent to the following 2 lines:
     // let transform_mul = vec2<f32>(this_char_info.width_in_em / scale_x, this_char_info.height_in_em / scale_y);
     // out.xy = pos_scaled.xy * transform_mul;
-    out.xy = pos_scaled.xy / vec2<f32>(multiplier_x, multiplier_y);
+    out.xy = pos_scaled.xy / multiplier;
     out.pixels_per_em = input.pixels_per_em;
     return out;
 }
