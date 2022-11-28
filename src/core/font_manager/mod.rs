@@ -7,7 +7,7 @@ use self::{font_data::FontData, font_outline::FontOutlineData, string_data::Char
 mod font_data;
 mod font_manager_builder;
 mod font_outline;
-mod string_data;
+pub mod string_data;
 
 pub struct FontManager {
     font_face: OwnedFace,

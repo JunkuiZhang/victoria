@@ -18,6 +18,10 @@ pub struct Graphics {
     string_len: u32,
 }
 
+pub trait Drawable {
+    fn draw(&self);
+}
+
 #[cfg(windows)]
 fn get_backend() -> wgpu::Backends {
     // wgpu::Backends::DX12
