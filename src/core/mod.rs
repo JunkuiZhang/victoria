@@ -25,19 +25,17 @@ pub struct Controller {
 impl Controller {
     pub fn new(window: &winit::window::Window, game_settings: Box<GameSettings>) -> Self {
         let font_path = Path::new("data").join("chi1.ttf");
-        let mut font_manager = FontManager::new(
+        let font_manager = FontManager::new(
             font_path,
             game_settings.get_window_width(),
             game_settings.get_window_height(),
         );
-        font_manager.preprocess_font();
-        font_manager.set_text();
         let gui_manager = GuiManager::new(
             game_settings.get_window_width(),
             game_settings.get_window_height(),
         );
-        let graphics = Graphics::new(window, &game_settings, &font_manager);
         let input = UserInput::new();
+        let graphics = Graphics::new(window, &game_settings, &font_manager);
 
         Controller {
             graphics,
@@ -54,14 +52,17 @@ impl Controller {
     }
 
     pub fn draw(&self) {
-        self.graphics.render();
+        self.graphics.draw(&self.gui_manager);
     }
 
     pub fn preprocess(&mut self) {
-        let font_path = Path::new("data").join("chi1.ttf");
-        // self.font_manager
-        //     .read_font(font_path, self.settings.get_font_texture_width());
-        self.graphics.set_font();
+        self.gui_manager.add_text(
+            "你好!123".to_string(),
+            self.font_manager.get_face(),
+            &self.graphics,
+        )
+        // self.gui_manager
+        //     .set_render_pipeline(&mut self.graphics, &self.font_manager);
     }
 
     pub fn exit(&self) {

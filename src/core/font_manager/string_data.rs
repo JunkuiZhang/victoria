@@ -1,7 +1,5 @@
-use crate::core::graphics::Drawable;
-
-#[derive(Debug, Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
 #[repr(C)]
+#[derive(Debug, Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct CharData {
     glyph_id: u32,
     coordinate: [f32; 2], // base line position
@@ -16,8 +14,4 @@ impl CharData {
             pixels_per_em,
         }
     }
-}
-
-impl Drawable for CharData {
-    fn draw(&self) {}
 }

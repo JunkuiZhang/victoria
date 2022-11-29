@@ -41,7 +41,7 @@ struct GameEngineSettings {
     window_title: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, Default)]
 struct GamePlayerSettings {
     #[serde(default)]
     window_setting: WindowSetting,
@@ -104,14 +104,6 @@ impl GameSettings {
 }
 
 // https://serde.rs/attr-default.html
-impl Default for GamePlayerSettings {
-    fn default() -> Self {
-        Self {
-            window_setting: WindowSetting::default(),
-        }
-    }
-}
-
 impl Default for GameEngineSettings {
     fn default() -> Self {
         Self {
