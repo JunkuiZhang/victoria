@@ -48,7 +48,11 @@ impl Controller {
     }
 
     pub fn update(&mut self) {
-        self.time_manager.update();
+        self.time_manager.update(
+            &mut self.gui_manager,
+            self.font_manager.get_face(),
+            &self.graphics,
+        );
     }
 
     pub fn draw(&self) {
@@ -57,7 +61,7 @@ impl Controller {
 
     pub fn preprocess(&mut self) {
         self.gui_manager.add_text(
-            "你好!123".to_string(),
+            "你好! 99900:".to_string(),
             self.font_manager.get_face(),
             &self.graphics,
         )

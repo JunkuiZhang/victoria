@@ -33,6 +33,7 @@ impl FontManager {
             window_size,
         }
     }
+
     pub fn prepare(
         &self,
         device: &wgpu::Device,

@@ -13,7 +13,32 @@ pub struct Text {
 }
 
 impl Text {
-    pub fn new(string_vec: Vec<CharData>, graphics: &Graphics) -> Self {
+    pub fn from_string(
+        s: String,
+        face: &owned_ttf_parser::Face,
+        graphics: &Graphics,
+        window_size: [f32; 2],
+    ) -> Self {
+        let mut last_width = 0.0;
+        let mut x_drift = -0.8;
+        let mut string_vec = Vec::new();
+        for this_char in s.chars() {
+            let glyph_index = face.glyph_index(this_char).unwrap();
+            let info = face.glyph_bounding_box(glyph_index).unwrap_or(
+                face.glyph_bounding_box(owned_ttf_parser::GlyphId(299))
+                    .unwrap(),
+            );
+            x_drift += last_width / window_size[0] * 2.0 * 1.05;
+            let y_drift =
+                info.y_min as f32 / face.units_per_em() as f32 * 200.0 / window_size[1] * 2.0;
+            println!("Draw {} with id {}", this_char, glyph_index.0);
+            string_vec.push(CharData::new(
+                glyph_index.0 as u32,
+                200.0,
+                [x_drift, -0.3 + y_drift],
+            ));
+            last_width = info.width() as f32 / face.units_per_em() as f32 * 200.0;
+        }
         let string_vec_buffer =
             graphics
                 .device
@@ -22,6 +47,7 @@ impl Text {
                     contents: bytemuck::cast_slice(&string_vec),
                     usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::STORAGE,
                 });
+
         Text {
             string_vec,
             string_vec_buffer,

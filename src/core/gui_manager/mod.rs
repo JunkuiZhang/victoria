@@ -27,26 +27,23 @@ impl GuiManager {
         face: &owned_ttf_parser::Face,
         graphics: &Graphics,
     ) {
-        let mut last_width = 0.0;
-        let mut x_drift = -0.8;
-        let mut string_vec = Vec::new();
-        for this_char in content.chars() {
-            let glyph_index = face.glyph_index(this_char).unwrap();
-            let info = face.glyph_bounding_box(glyph_index).unwrap();
-            x_drift += last_width / self.window_size[0] * 2.0 * 1.05;
-            let y_drift =
-                info.y_min as f32 / face.units_per_em() as f32 * 200.0 / self.window_size[1] * 2.0;
-            println!("Draw {} with id {}", this_char, glyph_index.0);
-            string_vec.push(CharData::new(
-                glyph_index.0 as u32,
-                200.0,
-                [x_drift, -0.3 + y_drift],
-            ));
-            last_width = info.width() as f32 / face.units_per_em() as f32 * 200.0;
-        }
-
-        let text = Text::new(string_vec, graphics);
+        let text = Text::from_string(content, face, graphics, self.window_size);
         self.content_list.push(Box::new(text));
+    }
+
+    pub fn update_at(
+        &mut self,
+        index: usize,
+        content: u64,
+        face: &owned_ttf_parser::Face,
+        graphics: &Graphics,
+    ) {
+        self.content_list[index] = Box::new(Text::from_string(
+            format!("FPS: {}", content).to_string(),
+            face,
+            graphics,
+            self.window_size,
+        ));
     }
 
     pub fn draw<'a>(
