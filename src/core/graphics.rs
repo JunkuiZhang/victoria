@@ -12,6 +12,7 @@ pub struct Graphics {
     pub surface: wgpu::Surface,
     queue: wgpu::Queue,
     pub font_graphics: FontGraphics,
+    staging_belt: wgpu::util::StagingBelt,
 }
 
 pub trait Drawable {
@@ -66,6 +67,7 @@ impl Graphics {
             alpha_mode: wgpu::CompositeAlphaMode::Auto,
         };
         surface.configure(&device, &surface_config);
+        let staging_belt = wgpu::util::StagingBelt::new(0x1000);
 
         // Font config
         let font_graphics = font_manager.prepare(&device, &surface, &adapter);
@@ -75,6 +77,7 @@ impl Graphics {
             surface,
             queue,
             font_graphics,
+            staging_belt,
         }
     }
 
