@@ -4,7 +4,10 @@ use crate::core::font_manager::string_data::CharData;
 
 use self::text::Text;
 
-use super::graphics::{Drawable, Graphics};
+use super::{
+    font_manager::FontManager,
+    graphics::{Drawable, Graphics},
+};
 
 mod text;
 
@@ -24,35 +27,22 @@ impl GuiManager {
     pub fn add_text(
         &mut self,
         content: String,
-        face: &owned_ttf_parser::Face,
+        font_manager: Rc<FontManager>,
         graphics: &Graphics,
     ) {
-        let text = Text::from_string(content, face, graphics, self.window_size);
+        let text = Text::from_string(content, font_manager, graphics);
         self.content_list.push(Box::new(text));
     }
 
-    pub fn update_at(
-        &mut self,
-        index: usize,
-        content: u64,
-        face: &owned_ttf_parser::Face,
-        graphics: &Graphics,
-    ) {
-        self.content_list[index] = Box::new(Text::from_string(
-            format!("FPS: {}", content).to_string(),
-            face,
-            graphics,
-            self.window_size,
-        ));
+    pub fn update_at(&mut self, index: usize, content: Vec<u8>, graphics: &mut Graphics) {
+        // self.content_list[index]
+        self.content_list[index].update_self(content, graphics);
     }
 
-    pub fn draw<'a>(
-        &'a self,
-        render_pass: Rc<RefCell<wgpu::RenderPass<'a>>>,
-        graphics: &'a Graphics,
-    ) {
+    pub fn draw(&self, graphics: &mut Graphics) {
         for thing in self.content_list.iter() {
-            thing.draw(render_pass.clone(), graphics);
+            // thing.draw(render_pass.clone(), graphics);
+            thing.draw_queue(graphics);
         }
     }
 }

@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{path::Path, rc::Rc};
 
 use crate::settings::GameSettings;
 
@@ -15,21 +15,21 @@ mod user_input;
 
 pub struct Controller {
     graphics: Graphics,
-    settings: Box<GameSettings>,
+    settings: Rc<GameSettings>,
     input: UserInput,
     time_manager: GameTimeManager,
-    font_manager: FontManager,
+    font_manager: Rc<FontManager>,
     gui_manager: GuiManager,
 }
 
 impl Controller {
-    pub fn new(window: &winit::window::Window, game_settings: Box<GameSettings>) -> Self {
+    pub fn new(window: &winit::window::Window, game_settings: Rc<GameSettings>) -> Self {
         let font_path = Path::new("data").join("chi1.ttf");
-        let font_manager = FontManager::new(
+        let font_manager = Rc::new(FontManager::new(
             font_path,
             game_settings.get_window_width(),
             game_settings.get_window_height(),
-        );
+        ));
         let gui_manager = GuiManager::new(
             game_settings.get_window_width(),
             game_settings.get_window_height(),
@@ -48,21 +48,19 @@ impl Controller {
     }
 
     pub fn update(&mut self) {
-        self.time_manager.update(
-            &mut self.gui_manager,
-            self.font_manager.get_face(),
-            &self.graphics,
-        );
+        self.time_manager
+            .update(&mut self.gui_manager, &mut self.graphics);
     }
 
-    pub fn draw(&self) {
+    pub fn draw(&mut self) {
+        self.gui_manager.draw(&mut self.graphics);
         self.graphics.draw(&self.gui_manager);
     }
 
     pub fn preprocess(&mut self) {
         self.gui_manager.add_text(
             "你好! 99900:".to_string(),
-            self.font_manager.get_face(),
+            self.font_manager.clone(),
             &self.graphics,
         )
         // self.gui_manager

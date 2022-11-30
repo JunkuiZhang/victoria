@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use owned_ttf_parser::{AsFaceRef, OwnedFace};
 use wgpu::util::DeviceExt;
 
@@ -308,15 +310,19 @@ impl FontManager {
         });
 
         FontGraphics {
-            vertex_buffer,
-            index_buffer,
-            render_pipeline,
-            uniform_bindgroup,
-            font_data_bindgroup,
+            vertex_buffer: Rc::new(vertex_buffer),
+            index_buffer: Rc::new(index_buffer),
+            render_pipeline: Rc::new(render_pipeline),
+            uniform_bindgroup: Rc::new(uniform_bindgroup),
+            font_data_bindgroup: Rc::new(font_data_bindgroup),
         }
     }
 
     pub fn get_face(&self) -> &owned_ttf_parser::Face {
         self.font_face.as_face_ref()
+    }
+
+    pub fn get_window_size(&self) -> [f32; 2] {
+        self.window_size
     }
 }

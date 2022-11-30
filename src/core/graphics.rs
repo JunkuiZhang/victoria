@@ -13,11 +13,35 @@ pub struct Graphics {
     queue: wgpu::Queue,
     pub font_graphics: FontGraphics,
     staging_belt: wgpu::util::StagingBelt,
+    pub update_queue: Vec<UpdateInfo>,
+    pub draw_queue: Vec<DrawCall>,
 }
 
 pub trait Drawable {
     // fn draw(&self, render_pass: Rc<RefCell<wgpu::RenderPass>>, graphics: &Graphics);
-    fn draw<'a>(&'a self, render_pass: Rc<RefCell<wgpu::RenderPass<'a>>>, graphics: &'a Graphics);
+    fn update_self(&mut self, content: Vec<u8>, graphics: &mut Graphics);
+    fn update_queue(&self, graphics: &mut Graphics);
+    fn draw_queue(&self, graphics: &mut Graphics);
+}
+
+pub struct UpdateInfo {
+    pub target_buffer: Rc<wgpu::Buffer>,
+    pub size: wgpu::BufferSize,
+    pub content: Rc<Vec<u8>>,
+}
+
+pub enum DrawCall {
+    DrawIndexed(DrawIndexedInfo),
+    Draw(u32),
+}
+
+pub struct DrawIndexedInfo {
+    pub pipeline: Rc<wgpu::RenderPipeline>,
+    pub vertex_buffer: Vec<Rc<wgpu::Buffer>>,
+    pub index_buffer: Rc<wgpu::Buffer>,
+    pub bindgroup: Vec<Rc<wgpu::BindGroup>>,
+    pub indices: u32,
+    pub instance: u32,
 }
 
 #[cfg(windows)]
@@ -78,10 +102,12 @@ impl Graphics {
             queue,
             font_graphics,
             staging_belt,
+            update_queue: Vec::new(),
+            draw_queue: Vec::new(),
         }
     }
 
-    pub fn draw(&self, gui: &GuiManager) {
+    pub fn draw(&mut self, gui: &GuiManager) {
         // get view
         let texture = self
             .surface
@@ -112,14 +138,58 @@ impl Graphics {
                     label: Some("Command Encoder"),
                 });
 
-        {
-            let render_pass = Rc::new(RefCell::new(
-                command_encoder.begin_render_pass(&render_pass_desc),
-            ));
-            gui.draw(render_pass, self);
+        // update stuff
+        let mut updated = false;
+        if !self.update_queue.is_empty() {
+            updated = true;
         }
+        {
+            // self.staging_belt.write_buffer(&mut command_encoder, target, offset, size, device).;
+            for update in self.update_queue.iter() {
+                self.staging_belt
+                    .write_buffer(
+                        &mut command_encoder,
+                        update.target_buffer.as_ref(),
+                        0,
+                        update.size,
+                        &self.device,
+                    )
+                    .copy_from_slice(update.content.as_ref());
+            }
+            self.staging_belt.finish();
+        }
+        self.update_queue.clear();
+        // render stuff
+        {
+            let mut render_pass = command_encoder.begin_render_pass(&render_pass_desc);
+            for draw_call in self.draw_queue.iter() {
+                match draw_call {
+                    DrawCall::DrawIndexed(info) => {
+                        render_pass.set_pipeline(info.pipeline.as_ref());
+                        for (slot, buffer) in info.vertex_buffer.iter().enumerate() {
+                            render_pass.set_vertex_buffer(slot as u32, buffer.slice(..));
+                        }
+                        for (index, group) in info.bindgroup.iter().enumerate() {
+                            render_pass.set_bind_group(index as u32, group, &[]);
+                        }
+                        render_pass.set_index_buffer(
+                            info.index_buffer.slice(..),
+                            wgpu::IndexFormat::Uint16,
+                        );
+                        render_pass.draw_indexed(0..info.indices, 0, 0..info.instance);
+                    }
+                    DrawCall::Draw(_) => todo!(),
+                }
+            }
+        }
+        self.draw_queue.clear();
 
         self.queue.submit(Some(command_encoder.finish()));
+
+        if updated {
+            self.staging_belt.recall();
+        }
+
         texture.present();
     }
 }
