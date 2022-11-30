@@ -24,7 +24,7 @@ impl GameTimeManager {
         let elpsed = current_time.duration_since(self.last_frame).as_secs_f64();
         self.last_frame = current_time;
         self.frame_count = (1.0 / elpsed) as u64;
-        if self.last_update.elapsed().as_secs() > 1 {
+        if self.last_update.elapsed().as_secs_f64() > 0.5 {
             let content = format!("FPS: {}", self.frame_count).as_bytes().to_vec();
             gui_manager.update_at(self.fps, content, graphics);
             self.last_update = current_time;
