@@ -139,10 +139,11 @@ impl Graphics {
                 });
 
         // update stuff
-        let mut updated = false;
-        if !self.update_queue.is_empty() {
-            updated = true;
-        }
+        let updated = if self.update_queue.is_empty() {
+            false
+        } else {
+            true
+        };
         {
             // self.staging_belt.write_buffer(&mut command_encoder, target, offset, size, device).;
             for update in self.update_queue.iter() {
