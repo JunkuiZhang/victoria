@@ -65,29 +65,16 @@ impl Text {
 
 impl Drawable for Text {
     fn draw<'a>(&'a self, render_pass: Rc<RefCell<wgpu::RenderPass<'a>>>, graphics: &'a Graphics) {
-        render_pass
-            .borrow_mut()
-            .set_pipeline(&graphics.font_graphics.render_pipeline);
-        render_pass
-            .borrow_mut()
-            .set_vertex_buffer(0, graphics.font_graphics.vertex_buffer.slice(..));
-        render_pass
-            .borrow_mut()
-            .set_vertex_buffer(1, self.string_vec_buffer.slice(..));
-        render_pass.borrow_mut().set_index_buffer(
+        let mut rp = render_pass.borrow_mut();
+        rp.set_pipeline(&graphics.font_graphics.render_pipeline);
+        rp.set_vertex_buffer(0, graphics.font_graphics.vertex_buffer.slice(..));
+        rp.set_vertex_buffer(1, self.string_vec_buffer.slice(..));
+        rp.set_index_buffer(
             graphics.font_graphics.index_buffer.slice(..),
             wgpu::IndexFormat::Uint16,
         );
-        render_pass
-            .borrow_mut()
-            .set_bind_group(0, &graphics.font_graphics.uniform_bindgroup, &[]);
-        render_pass.borrow_mut().set_bind_group(
-            1,
-            &graphics.font_graphics.font_data_bindgroup,
-            &[],
-        );
-        render_pass
-            .borrow_mut()
-            .draw_indexed(0..6, 0, 0..self.string_vec.len() as u32);
+        rp.set_bind_group(0, &graphics.font_graphics.uniform_bindgroup, &[]);
+        rp.set_bind_group(1, &graphics.font_graphics.font_data_bindgroup, &[]);
+        rp.draw_indexed(0..6, 0, 0..self.string_vec.len() as u32);
     }
 }
