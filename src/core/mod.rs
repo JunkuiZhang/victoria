@@ -53,8 +53,8 @@ impl Controller {
     }
 
     pub fn draw(&mut self) {
-        self.gui_manager.draw(&mut self.graphics);
-        self.graphics.draw(&self.gui_manager);
+        self.gui_manager.draw_queue(&mut self.graphics);
+        self.graphics.draw();
     }
 
     pub fn preprocess(&mut self) {

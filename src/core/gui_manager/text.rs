@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc, vec};
+use std::{rc::Rc, vec};
 
 use wgpu::util::DeviceExt;
 
@@ -9,7 +9,6 @@ use crate::core::{
 
 pub struct Text {
     font_manager: Rc<FontManager>,
-    string_vec: Vec<CharData>,
     string_vec_buffer: Rc<wgpu::Buffer>,
     raw_content: Rc<Vec<u8>>,
 }
@@ -32,19 +31,18 @@ impl Text {
 
         Text {
             font_manager,
-            string_vec,
             string_vec_buffer: Rc::new(string_vec_buffer),
             raw_content,
         }
     }
 
     pub fn update_string(&mut self, s: String) {
-        self.string_vec = Self::get_string_vec(
+        let string_vec = Self::get_string_vec(
             s,
             self.font_manager.get_face(),
             self.font_manager.get_window_size(),
         );
-        self.raw_content = Rc::new(bytemuck::cast_slice(&self.string_vec).to_vec());
+        self.raw_content = Rc::new(bytemuck::cast_slice(&string_vec).to_vec());
     }
 
     fn get_string_vec(
@@ -57,10 +55,10 @@ impl Text {
         let mut string_vec = Vec::new();
         for this_char in s.chars() {
             let glyph_index = face.glyph_index(this_char).unwrap();
-            let info = face.glyph_bounding_box(glyph_index).unwrap_or(
+            let info = face.glyph_bounding_box(glyph_index).unwrap_or_else(|| {
                 face.glyph_bounding_box(owned_ttf_parser::GlyphId(299))
-                    .unwrap(),
-            );
+                    .unwrap()
+            });
             x_drift += last_width / window_size[0] * 2.0 * 1.05;
             let y_drift =
                 info.y_min as f32 / face.units_per_em() as f32 * 200.0 / window_size[1] * 2.0;
@@ -86,10 +84,7 @@ impl Drawable for Text {
     fn update_queue(&self, graphics: &mut Graphics) {
         let res = UpdateInfo {
             target_buffer: self.string_vec_buffer.clone(),
-            size: wgpu::BufferSize::new(
-                (self.string_vec.len() * std::mem::size_of::<CharData>()) as _,
-            )
-            .unwrap(),
+            size: wgpu::BufferSize::new(self.raw_content.len() as _).unwrap(),
             content: self.raw_content.clone(),
         };
         graphics.update_queue.push(res);
@@ -108,7 +103,7 @@ impl Drawable for Text {
                 graphics.font_graphics.font_data_bindgroup.clone(),
             ],
             indices: 6,
-            instance: self.string_vec.len() as u32,
+            instance: (self.raw_content.len() / std::mem::size_of::<CharData>()) as u32,
         });
         graphics.draw_queue.push(res);
     }

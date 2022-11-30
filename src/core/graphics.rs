@@ -1,11 +1,8 @@
-use std::{cell::RefCell, rc::Rc};
+use std::rc::Rc;
 
 use crate::settings::GameSettings;
 
-use super::{
-    font_manager::{font_graphics::FontGraphics, FontManager},
-    gui_manager::GuiManager,
-};
+use super::font_manager::{font_graphics::FontGraphics, FontManager};
 
 pub struct Graphics {
     pub device: wgpu::Device,
@@ -107,7 +104,7 @@ impl Graphics {
         }
     }
 
-    pub fn draw(&mut self, gui: &GuiManager) {
+    pub fn draw(&mut self) {
         // get view
         let texture = self
             .surface
@@ -139,11 +136,7 @@ impl Graphics {
                 });
 
         // update stuff
-        let updated = if self.update_queue.is_empty() {
-            false
-        } else {
-            true
-        };
+        let updated = !self.update_queue.is_empty();
         {
             // self.staging_belt.write_buffer(&mut command_encoder, target, offset, size, device).;
             for update in self.update_queue.iter() {

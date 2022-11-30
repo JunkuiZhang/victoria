@@ -1,6 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
-
-use crate::core::font_manager::string_data::CharData;
+use std::rc::Rc;
 
 use self::text::Text;
 
@@ -39,7 +37,7 @@ impl GuiManager {
         self.content_list[index].update_self(content, graphics);
     }
 
-    pub fn draw(&self, graphics: &mut Graphics) {
+    pub fn draw_queue(&self, graphics: &mut Graphics) {
         for thing in self.content_list.iter() {
             // thing.draw(render_pass.clone(), graphics);
             thing.draw_queue(graphics);
