@@ -8,15 +8,25 @@ use crate::core::{
 };
 
 pub struct Text {
+    font_size: f32,
     font_manager: Rc<FontManager>,
     string_vec_buffer: Rc<wgpu::Buffer>,
     raw_content: Rc<Vec<u8>>,
 }
 
 impl Text {
-    pub fn from_string(s: String, font_manager: Rc<FontManager>, graphics: &Graphics) -> Self {
-        let string_vec =
-            Self::get_string_vec(s, font_manager.get_face(), font_manager.get_window_size());
+    pub fn from_string(
+        s: String,
+        font_size: f32,
+        font_manager: Rc<FontManager>,
+        graphics: &Graphics,
+    ) -> Self {
+        let string_vec = Self::get_string_vec(
+            s,
+            font_size,
+            font_manager.get_face(),
+            font_manager.get_window_size(),
+        );
         let string_vec_buffer =
             graphics
                 .device
@@ -30,6 +40,7 @@ impl Text {
         let raw_content = Rc::new(bytemuck::cast_slice(&string_vec).to_vec());
 
         Text {
+            font_size,
             font_manager,
             string_vec_buffer: Rc::new(string_vec_buffer),
             raw_content,
@@ -39,6 +50,7 @@ impl Text {
     pub fn update_string(&mut self, s: String) {
         let string_vec = Self::get_string_vec(
             s,
+            self.font_size,
             self.font_manager.get_face(),
             self.font_manager.get_window_size(),
         );
@@ -47,6 +59,7 @@ impl Text {
 
     fn get_string_vec(
         s: String,
+        font_size: f32,
         face: &owned_ttf_parser::Face,
         window_size: [f32; 2],
     ) -> Vec<CharData> {
@@ -61,13 +74,13 @@ impl Text {
             });
             x_drift += last_width / window_size[0] * 2.0 * 1.05;
             let y_drift =
-                info.y_min as f32 / face.units_per_em() as f32 * 200.0 / window_size[1] * 2.0;
+                info.y_min as f32 / face.units_per_em() as f32 * font_size / window_size[1] * 2.0;
             string_vec.push(CharData::new(
                 glyph_index.0 as u32,
-                200.0,
+                font_size,
                 [x_drift, -0.3 + y_drift],
             ));
-            last_width = info.width() as f32 / face.units_per_em() as f32 * 200.0;
+            last_width = info.width() as f32 / face.units_per_em() as f32 * font_size;
         }
 
         string_vec

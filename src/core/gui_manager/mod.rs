@@ -25,10 +25,11 @@ impl GuiManager {
     pub fn add_text(
         &mut self,
         content: String,
+        font_size: f32,
         font_manager: Rc<FontManager>,
         graphics: &Graphics,
     ) {
-        let text = Text::from_string(content, font_manager, graphics);
+        let text = Text::from_string(content, font_size, font_manager, graphics);
         self.content_list.push(Box::new(text));
     }
 
