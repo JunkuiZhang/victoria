@@ -96,12 +96,12 @@ impl Graphics {
         let staging_belt = wgpu::util::StagingBelt::new(0x1000);
 
         // Font config
-        let font_graphics = font_manager.prepare(&device, &surface, &adapter);
         let context = GpuContext {
             device,
             surface,
             adapter,
         };
+        let font_graphics = font_manager.prepare(&context);
 
         Graphics {
             context,
