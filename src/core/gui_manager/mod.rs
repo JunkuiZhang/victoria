@@ -4,7 +4,7 @@ use self::text::Text;
 
 use super::{
     font_manager::FontManager,
-    graphics::{DrawCall, Drawable, GpuContext, Graphics, UpdateInfo},
+    graphics::{DrawCall, Drawable, GpuContext, UpdateInfo},
     resources::ResourceManager,
 };
 

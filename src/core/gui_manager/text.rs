@@ -4,7 +4,7 @@ use wgpu::util::DeviceExt;
 
 use crate::core::{
     font_manager::{string_data::CharData, FontManager},
-    graphics::{DrawCall, DrawIndexedInfo, Drawable, GpuContext, Graphics, UpdateInfo},
+    graphics::{DrawCall, DrawIndexedInfo, Drawable, GpuContext, UpdateInfo},
     resources::ResourceManager,
 };
 

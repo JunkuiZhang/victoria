@@ -1,9 +1,6 @@
 use std::time::Instant;
 
-use super::{
-    graphics::{Graphics, UpdateInfo},
-    gui_manager::GuiManager,
-};
+use super::{graphics::UpdateInfo, gui_manager::GuiManager};
 
 pub struct GameTimeManager {
     frame_count: u64,

@@ -2,10 +2,7 @@ use std::rc::Rc;
 
 use crate::settings::GameSettings;
 
-use super::{
-    font_manager::{font_graphics::FontGraphics, FontManager},
-    resources::ResourceManager,
-};
+use super::resources::ResourceManager;
 
 pub struct GpuContext {
     pub device: wgpu::Device,
