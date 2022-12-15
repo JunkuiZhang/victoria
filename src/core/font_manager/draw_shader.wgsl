@@ -65,7 +65,6 @@ fn vs_main(input: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(input: FragmengInput) -> @location(0) vec4<f32> {
-    var indicator: bool = false; // TODO: Delete
     let epsilon: f32 = 0.0001;
     let glyph_id = input.glyph_id;
     let glyph_data = font_info[glyph_id];
@@ -77,8 +76,7 @@ fn fs_main(input: FragmengInput) -> @location(0) vec4<f32> {
     let pixel = input.position;
 
     var winding_number: f32 = 0.0;
-    var temp_color: vec3<f32> = vec3<f32>(0.0, 0.0, 0.0);
-    temp_color = vec3<f32>(1.0, 1.0, 1.0);
+    let temp_color: vec4<f32> = vec4<f32>(1.0, 1.0, 1.0, 1.0);
 
     var x: u32 = 0u;
     loop {
@@ -90,9 +88,6 @@ fn fs_main(input: FragmengInput) -> @location(0) vec4<f32> {
         let curve_index = curve_index_offset + glyph_data.curve_texel_index;
         let point0 = font_curves[curve_index - 1u].p2 - pixel;
         let origin_data = font_curves[curve_index - 1u].p2;
-        if origin_data.x < 0.0 || origin_data.y < 0.0 {
-            indicator = true;
-        }
         let this_curve = font_curves[curve_index];
         let point1 = this_curve.p1 - pixel;
         let point2 = this_curve.p2 - pixel;
@@ -150,14 +145,9 @@ fn fs_main(input: FragmengInput) -> @location(0) vec4<f32> {
     }
 
     if winding_number > epsilon {
-        return vec4<f32>(temp_color, winding_number);
+        return temp_color * winding_number;
     } else {
-        if indicator {
-            return vec4<f32>(0.7, 0.2, 0.2, 1.0);
-        } else {
-            return vec4<f32>(0.2, 0.7, 0.2, 1.0);
-            // return vec4<f32>(0.0, 0.0, 0.0, 0.0);
-        }
+        return vec4<f32>(0.0, 0.0, 0.0, 0.0);
     }
     // return vec4<f32>(1.0, 0.7, 0.5, 1.0);
 }
