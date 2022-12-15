@@ -4,9 +4,14 @@ use crate::settings::GameSettings;
 
 use super::font_manager::{font_graphics::FontGraphics, FontManager};
 
-pub struct Graphics {
+pub struct GpuContext {
     pub device: wgpu::Device,
     pub surface: wgpu::Surface,
+    pub adapter: wgpu::Adapter,
+}
+
+pub struct Graphics {
+    pub context: GpuContext,
     queue: wgpu::Queue,
     pub font_graphics: FontGraphics,
     staging_belt: wgpu::util::StagingBelt,
@@ -92,10 +97,14 @@ impl Graphics {
 
         // Font config
         let font_graphics = font_manager.prepare(&device, &surface, &adapter);
-
-        Graphics {
+        let context = GpuContext {
             device,
             surface,
+            adapter,
+        };
+
+        Graphics {
+            context,
             queue,
             font_graphics,
             staging_belt,
@@ -107,6 +116,7 @@ impl Graphics {
     pub fn draw(&mut self) {
         // get view
         let texture = self
+            .context
             .surface
             .get_current_texture()
             .expect("Error getting surface texture!");
@@ -130,7 +140,8 @@ impl Graphics {
         };
 
         let mut command_encoder =
-            self.device
+            self.context
+                .device
                 .create_command_encoder(&wgpu::CommandEncoderDescriptor {
                     label: Some("Command Encoder"),
                 });
@@ -146,7 +157,7 @@ impl Graphics {
                         update.target_buffer.as_ref(),
                         0,
                         update.size,
-                        &self.device,
+                        &self.context.device,
                     )
                     .copy_from_slice(update.content.as_ref());
             }
