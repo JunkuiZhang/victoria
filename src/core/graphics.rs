@@ -2,7 +2,10 @@ use std::rc::Rc;
 
 use crate::settings::GameSettings;
 
-use super::font_manager::{font_graphics::FontGraphics, FontManager};
+use super::{
+    font_manager::{font_graphics::FontGraphics, FontManager},
+    resources::ResourceManager,
+};
 
 pub struct GpuContext {
     pub device: wgpu::Device,
@@ -13,7 +16,6 @@ pub struct GpuContext {
 pub struct Graphics {
     pub context: GpuContext,
     queue: wgpu::Queue,
-    pub font_graphics: FontGraphics,
     staging_belt: wgpu::util::StagingBelt,
     pub update_queue: Vec<UpdateInfo>,
     pub draw_queue: Vec<DrawCall>,
@@ -21,9 +23,9 @@ pub struct Graphics {
 
 pub trait Drawable {
     // fn draw(&self, render_pass: Rc<RefCell<wgpu::RenderPass>>, graphics: &Graphics);
-    fn update_self(&mut self, content: Vec<u8>, graphics: &mut Graphics);
-    fn update_queue(&self, graphics: &mut Graphics);
-    fn draw_queue(&self, graphics: &mut Graphics);
+    fn update_queue(&mut self, content: Vec<u8>, update_queue: &mut Vec<UpdateInfo>);
+    fn get_update_info(&self) -> UpdateInfo;
+    fn get_draw_info(&self, resource_manager: &ResourceManager) -> DrawCall;
 }
 
 pub struct UpdateInfo {
@@ -58,11 +60,7 @@ fn get_backend() -> wgpu::Backends {
 }
 
 impl Graphics {
-    pub fn new(
-        window: &winit::window::Window,
-        settings: &GameSettings,
-        font_manager: &FontManager,
-    ) -> Self {
+    pub fn new(window: &winit::window::Window, settings: &GameSettings) -> Self {
         // surface queue config
         let instance = wgpu::Instance::new(get_backend());
         let surface = unsafe { instance.create_surface(window) };
@@ -101,12 +99,10 @@ impl Graphics {
             surface,
             adapter,
         };
-        let font_graphics = font_manager.prepare(&context);
 
         Graphics {
             context,
             queue,
-            font_graphics,
             staging_belt,
             update_queue: Vec::new(),
             draw_queue: Vec::new(),

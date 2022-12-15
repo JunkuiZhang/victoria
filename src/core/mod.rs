@@ -4,13 +4,14 @@ use crate::settings::GameSettings;
 
 use self::{
     font_manager::FontManager, game_time::GameTimeManager, graphics::Graphics,
-    gui_manager::GuiManager, user_input::UserInput,
+    gui_manager::GuiManager, resources::ResourceManager, user_input::UserInput,
 };
 
 mod font_manager;
 mod game_time;
 mod graphics;
 mod gui_manager;
+mod resources;
 mod user_input;
 
 pub struct Controller {
@@ -20,6 +21,7 @@ pub struct Controller {
     time_manager: GameTimeManager,
     font_manager: Rc<FontManager>,
     gui_manager: GuiManager,
+    resource_manager: ResourceManager,
 }
 
 impl Controller {
@@ -35,7 +37,8 @@ impl Controller {
             game_settings.get_window_height(),
         );
         let input = UserInput::new();
-        let graphics = Graphics::new(window, &game_settings, &font_manager);
+        let graphics = Graphics::new(window, &game_settings);
+        let resource_manager = ResourceManager::new(&font_manager, &graphics.context);
 
         Controller {
             graphics,
@@ -44,16 +47,18 @@ impl Controller {
             time_manager: GameTimeManager::new(),
             font_manager,
             gui_manager,
+            resource_manager,
         }
     }
 
     pub fn update(&mut self) {
         self.time_manager
-            .update(&mut self.gui_manager, &mut self.graphics);
+            .update(&mut self.gui_manager, &mut self.graphics.update_queue);
     }
 
     pub fn draw(&mut self) {
-        self.gui_manager.draw_queue(&mut self.graphics);
+        self.gui_manager
+            .draw_queue(&self.resource_manager, &mut self.graphics.draw_queue);
         self.graphics.draw();
     }
 
@@ -62,7 +67,7 @@ impl Controller {
             "你好! 99900:".to_string(),
             200.0,
             self.font_manager.clone(),
-            &self.graphics,
+            &self.graphics.context,
         )
         // self.gui_manager
         //     .set_render_pipeline(&mut self.graphics, &self.font_manager);

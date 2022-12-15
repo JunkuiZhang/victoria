@@ -4,7 +4,8 @@ use self::text::Text;
 
 use super::{
     font_manager::FontManager,
-    graphics::{Drawable, Graphics},
+    graphics::{DrawCall, Drawable, GpuContext, Graphics, UpdateInfo},
+    resources::ResourceManager,
 };
 
 mod text;
@@ -27,21 +28,25 @@ impl GuiManager {
         content: String,
         font_size: f32,
         font_manager: Rc<FontManager>,
-        graphics: &Graphics,
+        gpu_context: &GpuContext,
     ) {
-        let text = Text::from_string(content, font_size, font_manager, graphics);
+        let text = Text::from_string(content, font_size, font_manager, gpu_context);
         self.content_list.push(Box::new(text));
     }
 
-    pub fn update_at(&mut self, index: usize, content: Vec<u8>, graphics: &mut Graphics) {
+    pub fn update_at(
+        &mut self,
+        index: usize,
+        content: Vec<u8>,
+        update_queue: &mut Vec<UpdateInfo>,
+    ) {
         // self.content_list[index]
-        self.content_list[index].update_self(content, graphics);
+        self.content_list[index].update_queue(content, update_queue);
     }
 
-    pub fn draw_queue(&self, graphics: &mut Graphics) {
-        for thing in self.content_list.iter() {
-            // thing.draw(render_pass.clone(), graphics);
-            thing.draw_queue(graphics);
-        }
+    pub fn draw_queue(&self, resource_manager: &ResourceManager, draw_queue: &mut Vec<DrawCall>) {
+        self.content_list.iter().for_each(|thing| {
+            draw_queue.push(thing.get_draw_info(resource_manager));
+        });
     }
 }

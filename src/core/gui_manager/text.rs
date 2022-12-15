@@ -4,7 +4,8 @@ use wgpu::util::DeviceExt;
 
 use crate::core::{
     font_manager::{string_data::CharData, FontManager},
-    graphics::{DrawCall, DrawIndexedInfo, Drawable, Graphics, UpdateInfo},
+    graphics::{DrawCall, DrawIndexedInfo, Drawable, GpuContext, Graphics, UpdateInfo},
+    resources::ResourceManager,
 };
 
 pub struct Text {
@@ -19,7 +20,7 @@ impl Text {
         s: String,
         font_size: f32,
         font_manager: Rc<FontManager>,
-        graphics: &Graphics,
+        gpu_context: &GpuContext,
     ) -> Self {
         let string_vec = Self::get_string_vec(
             s,
@@ -28,7 +29,7 @@ impl Text {
             font_manager.get_window_size(),
         );
         let string_vec_buffer =
-            graphics
+            gpu_context
                 .device
                 .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                     label: Some("String Vec Buffer"),
@@ -88,36 +89,34 @@ impl Text {
 }
 
 impl Drawable for Text {
-    fn update_self(&mut self, content: Vec<u8>, graphics: &mut Graphics) {
+    fn update_queue(&mut self, content: Vec<u8>, update_queue: &mut Vec<UpdateInfo>) {
         let s = String::from_utf8(content).unwrap();
         self.update_string(s);
-        self.update_queue(graphics);
+        update_queue.push(self.get_update_info());
     }
 
-    fn update_queue(&self, graphics: &mut Graphics) {
-        let res = UpdateInfo {
+    fn get_update_info(&self) -> UpdateInfo {
+        UpdateInfo {
             target_buffer: self.string_vec_buffer.clone(),
             size: wgpu::BufferSize::new(self.raw_content.len() as _).unwrap(),
             content: self.raw_content.clone(),
-        };
-        graphics.update_queue.push(res);
+        }
     }
 
-    fn draw_queue(&self, graphics: &mut Graphics) {
-        let res = DrawCall::DrawIndexed(DrawIndexedInfo {
-            pipeline: graphics.font_graphics.render_pipeline.clone(),
+    fn get_draw_info(&self, resource_manager: &ResourceManager) -> DrawCall {
+        DrawCall::DrawIndexed(DrawIndexedInfo {
+            pipeline: resource_manager.font.render_pipeline.clone(),
             vertex_buffer: vec![
-                graphics.font_graphics.vertex_buffer.clone(),
+                resource_manager.font.vertex_buffer.clone(),
                 self.string_vec_buffer.clone(),
             ],
-            index_buffer: graphics.font_graphics.index_buffer.clone(),
+            index_buffer: resource_manager.font.index_buffer.clone(),
             bindgroup: vec![
-                graphics.font_graphics.uniform_bindgroup.clone(),
-                graphics.font_graphics.font_data_bindgroup.clone(),
+                resource_manager.font.uniform_bindgroup.clone(),
+                resource_manager.font.font_data_bindgroup.clone(),
             ],
             indices: 6,
             instance: (self.raw_content.len() / std::mem::size_of::<CharData>()) as u32,
-        });
-        graphics.draw_queue.push(res);
+        })
     }
 }
