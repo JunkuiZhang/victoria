@@ -112,30 +112,30 @@ impl FontManager {
                         // horizontal band detect
                         if (y2 - last_y).abs() > epsilon {
                             // reject horizontal line, cause it makes no contribute to winding number
-                            let maxy = max_3number(last_y, y1, y2);
-                            let miny = min_3number(last_y, y1, y2);
-                            for index in 0..band_count {
-                                let starty = hband_size * (index as f32);
-                                let endy = starty + hband_size;
-                                if maxy < starty || miny > endy {
-                                    continue;
-                                }
-                                hband_temp[index].push((maxy, this_char_glyph_offset as u32));
-                            }
+                            band_process(
+                                true,
+                                hband_size,
+                                [last_x, last_y],
+                                [x1, y1],
+                                [x2, y2],
+                                band_count,
+                                this_char_glyph_offset,
+                                &mut hband_temp,
+                            );
                         }
                         // vertical band detect
                         if (x2 - last_x).abs() > epsilon {
                             // reject vertical line, cause it makes no contribute to winding number
-                            let maxx = max_3number(last_x, x1, x2);
-                            let minx = min_3number(last_x, x1, x2);
-                            for index in 0..band_count {
-                                let startx = vband_size * (index as f32);
-                                let endx = startx + vband_size;
-                                if maxx < startx || minx > endx {
-                                    continue;
-                                }
-                                vband_temp[index].push((maxx, this_char_glyph_offset as u32));
-                            }
+                            band_process(
+                                false,
+                                vband_size,
+                                [last_x, last_y],
+                                [x1, y1],
+                                [x2, y2],
+                                band_count,
+                                this_char_glyph_offset,
+                                &mut vband_temp,
+                            );
                         }
                         last_x = x2;
                         last_y = y2;
@@ -149,27 +149,27 @@ impl FontManager {
                         font_curves.push([x1, y1, x2, y2]);
                         let this_char_glyph_offset = curves_index - this_char_curve_start;
                         // horizontal band detect
-                        let maxy = max_3number(last_y, y1, y2);
-                        let miny = min_3number(last_y, y1, y2);
-                        for index in 0..band_count {
-                            let starty = hband_size * (index as f32);
-                            let endy = starty + hband_size;
-                            if maxy < starty || miny > endy {
-                                continue;
-                            }
-                            hband_temp[index].push((maxy, this_char_glyph_offset as u32));
-                        }
+                        band_process(
+                            true,
+                            hband_size,
+                            [last_x, last_y],
+                            [x1, y1],
+                            [x2, y2],
+                            band_count,
+                            this_char_glyph_offset,
+                            &mut hband_temp,
+                        );
                         // vertical band detect
-                        let maxx = max_3number(last_x, x1, x2);
-                        let minx = min_3number(last_x, x1, x2);
-                        for index in 0..band_count {
-                            let startx = vband_size * (index as f32);
-                            let endx = startx + vband_size;
-                            if maxx < startx || minx > endx {
-                                continue;
-                            }
-                            vband_temp[index].push((maxx, this_char_glyph_offset as u32));
-                        }
+                        band_process(
+                            false,
+                            vband_size,
+                            [last_x, last_y],
+                            [x1, y1],
+                            [x2, y2],
+                            band_count,
+                            this_char_glyph_offset,
+                            &mut vband_temp,
+                        );
                         last_x = x2;
                         last_y = y2;
                         curves_index += 1;
@@ -195,7 +195,7 @@ impl FontManager {
             // TODO: Delete this
             if glyph_id == 4 {
                 println!("Curves: {:?}", font_curves);
-                println!("{:?}", hband_temp);
+                println!("{:?}", vband_temp);
             }
 
             for index in 0..band_count {
@@ -208,10 +208,10 @@ impl FontManager {
             }
             // TODO: Delete this
             if glyph_id == 4 {
-                println!("hband: {:?}", hor_band_list);
+                println!("hband: {:?}", ver_band_list);
             }
             if glyph_id == 5 {
-                println!("hband: {:?}", hor_band_list);
+                println!("hband: {:?}", ver_band_list);
             }
         }
 
@@ -472,5 +472,39 @@ impl FontManager {
 
     pub fn get_window_size(&self) -> [f32; 2] {
         self.window_size
+    }
+}
+
+fn band_process(
+    horzontal: bool,
+    band_size: f32,
+    p0: [f32; 2],
+    p1: [f32; 2],
+    p2: [f32; 2],
+    band_count: usize,
+    offset: usize,
+    band_list: &mut Vec<Vec<(f32, u32)>>,
+) {
+    let x_axis;
+    let y_axis;
+    if horzontal {
+        x_axis = 0;
+        y_axis = 1;
+    } else {
+        x_axis = 1;
+        y_axis = 0;
+    }
+    let maxy = max_3number(p0[y_axis], p1[y_axis], p2[y_axis]);
+    let miny = min_3number(p0[y_axis], p1[y_axis], p2[y_axis]);
+    for index in 0..band_count {
+        let starty = band_size * (index as f32);
+        let endy = starty + band_size;
+        if maxy < starty || miny > endy {
+            continue;
+        }
+        band_list[index].push((
+            max_3number(p0[x_axis], p1[x_axis], p2[x_axis]),
+            offset as u32,
+        ));
     }
 }
