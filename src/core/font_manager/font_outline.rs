@@ -25,6 +25,10 @@ impl FontOutlineData {
         self.points.iter()
     }
 
+    pub fn number_of_curves(&self) -> usize {
+        self.points.len()
+    }
+
     pub fn debug_print(&self) {
         println!("Command len: {} ==> {:?}", self.points.len(), self.points);
     }

@@ -3,7 +3,7 @@ use std::rc::Rc;
 use owned_ttf_parser::{AsFaceRef, OwnedFace};
 use wgpu::util::DeviceExt;
 
-use crate::utils::max_3number;
+use crate::utils::{max_3number, min_3number};
 
 use self::{
     font_data::FontData, font_graphics::FontGraphics, font_outline::FontOutlineData,
@@ -43,9 +43,9 @@ impl FontManager {
         let units_per_em = font_face.units_per_em() as f32;
         let mut font_data = Vec::new();
         let mut font_curves = Vec::new();
-        let mut font_curve_ordering_list = Vec::new();
+        let mut hor_band_list = Vec::new(); // from bottom to top
+        let mut ver_band_list = Vec::new(); // from left to right
         let mut curves_index = 0;
-        let mut ordering_index = 0;
 
         for glyph_id in 0..font_face.number_of_glyphs() {
             let mut this_char = FontOutlineData::new();
@@ -58,19 +58,41 @@ impl FontManager {
                     continue;
                 };
 
+            let this_char_curve_count = this_char.number_of_curves();
+            let mut band_count = this_char_curve_count / 8; // 8 curves per band
+            if band_count < 2 {
+                band_count = 2;
+            }
+            if band_count > 16 {
+                band_count = 16;
+            }
+            let hband_size = bounding_box.height() as f32 / units_per_em / band_count as f32;
+            let vband_size = bounding_box.width() as f32 / units_per_em / band_count as f32;
+
             // processing
             let mut last_x = 0.0;
             let mut last_y = 0.0;
-            let origin_x = bounding_box.x_min as f32 / units_per_em; // -0.1 for padding
+            let origin_x = bounding_box.x_min as f32 / units_per_em;
             let origin_y = bounding_box.y_min as f32 / units_per_em;
             let this_char_curve_start = curves_index;
+            let hband_index_start = hor_band_list.len();
+            let vband_index_start = ver_band_list.len();
             font_data.push(FontData::new(
                 this_char_curve_start,
-                ordering_index,
+                hband_index_start,
+                vband_index_start,
+                band_count as u32,
                 &bounding_box,
                 units_per_em,
             ));
-            let mut curve_info_data = Vec::new();
+
+            let epsilon = 0.000001;
+            let mut hband_temp = Vec::new();
+            let mut vband_temp = Vec::new();
+            for _ in 0..band_count {
+                hband_temp.push(Vec::new());
+                vband_temp.push(Vec::new());
+            }
             for command in this_char.point_command_iter() {
                 match *command {
                     font_outline::OutlineDrawCommand::MoveTo(a, b) => {
@@ -85,10 +107,36 @@ impl FontManager {
                         let x1 = (x2 + last_x) / 2.0;
                         let y1 = (y2 + last_y) / 2.0;
                         font_curves.push([x1, y1, x2, y2]);
-                        // let minx = min_3number(last_x, x1, x2);
-                        let maxx = max_3number(last_x, x1, x2);
+
                         let this_char_glyph_offset = curves_index - this_char_curve_start;
-                        curve_info_data.push((this_char_glyph_offset, maxx));
+                        // horizontal band detect
+                        if (y2 - last_y).abs() > epsilon {
+                            // reject horizontal line, cause it makes no contribute to winding number
+                            let maxy = max_3number(last_y, y1, y2);
+                            let miny = min_3number(last_y, y1, y2);
+                            for index in 0..band_count {
+                                let starty = hband_size * (index as f32);
+                                let endy = starty + hband_size;
+                                if maxy < starty || miny > endy {
+                                    continue;
+                                }
+                                hband_temp[index].push((maxy, this_char_glyph_offset as u32));
+                            }
+                        }
+                        // vertical band detect
+                        if (x2 - last_x).abs() > epsilon {
+                            // reject vertical line, cause it makes no contribute to winding number
+                            let maxx = max_3number(last_x, x1, x2);
+                            let minx = min_3number(last_x, x1, x2);
+                            for index in 0..band_count {
+                                let startx = vband_size * (index as f32);
+                                let endx = startx + vband_size;
+                                if maxx < startx || minx > endx {
+                                    continue;
+                                }
+                                vband_temp[index].push((maxx, this_char_glyph_offset as u32));
+                            }
+                        }
                         last_x = x2;
                         last_y = y2;
                         curves_index += 1;
@@ -99,9 +147,29 @@ impl FontManager {
                         let x2 = a / units_per_em - origin_x;
                         let y2 = b / units_per_em - origin_y;
                         font_curves.push([x1, y1, x2, y2]);
-                        let maxx = max_3number(last_x, x1, x2);
                         let this_char_glyph_offset = curves_index - this_char_curve_start;
-                        curve_info_data.push((this_char_glyph_offset, maxx));
+                        // horizontal band detect
+                        let maxy = max_3number(last_y, y1, y2);
+                        let miny = min_3number(last_y, y1, y2);
+                        for index in 0..band_count {
+                            let starty = hband_size * (index as f32);
+                            let endy = starty + hband_size;
+                            if maxy < starty || miny > endy {
+                                continue;
+                            }
+                            hband_temp[index].push((maxy, this_char_glyph_offset as u32));
+                        }
+                        // vertical band detect
+                        let maxx = max_3number(last_x, x1, x2);
+                        let minx = min_3number(last_x, x1, x2);
+                        for index in 0..band_count {
+                            let startx = vband_size * (index as f32);
+                            let endx = startx + vband_size;
+                            if maxx < startx || minx > endx {
+                                continue;
+                            }
+                            vband_temp[index].push((maxx, this_char_glyph_offset as u32));
+                        }
                         last_x = x2;
                         last_y = y2;
                         curves_index += 1;
@@ -110,18 +178,41 @@ impl FontManager {
                     font_outline::OutlineDrawCommand::Close => {}
                 }
             }
-            curve_info_data
-                .sort_by(|(_, max_num0), (_, max_num2)| max_num2.partial_cmp(max_num0).unwrap());
 
-            font_curve_ordering_list.push(curve_info_data.len() as u32);
-            for (offset, _) in curve_info_data.iter() {
-                // let row_num = (*index / 4096) << 16;
-                // let col_num = *index % 4096;
-                // self.font_curve_ordering_list
-                //     .push((row_num | col_num) as u32);
-                font_curve_ordering_list.push(*offset as u32);
+            let mut hcount = 2 * band_count;
+            let mut vcount = 2 * band_count;
+            for index in 0..band_count {
+                hor_band_list.push(hcount as u32);
+                hor_band_list.push(hband_temp[index].len() as u32);
+                hband_temp[index].sort_by(|(max0, _), (max1, _)| max1.partial_cmp(max0).unwrap());
+                hcount += hband_temp[index].len();
+
+                ver_band_list.push(vcount as u32);
+                ver_band_list.push(vband_temp[index].len() as u32);
+                vband_temp[index].sort_by(|(max0, _), (max1, _)| max1.partial_cmp(max0).unwrap());
+                vcount += vband_temp[index].len();
             }
-            ordering_index += curve_info_data.len() + 1;
+            // TODO: Delete this
+            if glyph_id == 4 {
+                println!("Curves: {:?}", font_curves);
+                println!("{:?}", hband_temp);
+            }
+
+            for index in 0..band_count {
+                for (_, offset) in hband_temp[index].iter() {
+                    hor_band_list.push(*offset);
+                }
+                for (_, offset) in vband_temp[index].iter() {
+                    ver_band_list.push(*offset);
+                }
+            }
+            // TODO: Delete this
+            if glyph_id == 4 {
+                println!("hband: {:?}", hor_band_list);
+            }
+            if glyph_id == 5 {
+                println!("hband: {:?}", hor_band_list);
+            }
         }
 
         // shader config
@@ -208,7 +299,6 @@ impl FontManager {
         let font_data_mem_size = std::mem::size_of::<FontData>();
         let font_data_size = font_data.len();
         let font_texture_size = font_curves.len();
-        let font_ordering_size = font_curve_ordering_list.len();
         let font_bindgroup_layout =
             gpu_context
                 .device
@@ -246,7 +336,19 @@ impl FontManager {
                                 ty: wgpu::BufferBindingType::Storage { read_only: true },
                                 has_dynamic_offset: false,
                                 min_binding_size: wgpu::BufferSize::new(
-                                    (font_ordering_size * std::mem::size_of::<u16>()) as _,
+                                    (hor_band_list.len() * std::mem::size_of::<u32>()) as _,
+                                ),
+                            },
+                            count: None,
+                        },
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 3,
+                            visibility: wgpu::ShaderStages::FRAGMENT,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Storage { read_only: true },
+                                has_dynamic_offset: false,
+                                min_binding_size: wgpu::BufferSize::new(
+                                    (ver_band_list.len() * std::mem::size_of::<u32>()) as _,
                                 ),
                             },
                             count: None,
@@ -269,12 +371,20 @@ impl FontManager {
                     contents: bytemuck::cast_slice(&font_curves),
                     usage: wgpu::BufferUsages::STORAGE,
                 });
-        let font_ordering_buffer =
+        let horizontal_band_buffer =
             gpu_context
                 .device
                 .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                     label: Some("Glyph Curve Ordering Buffer"),
-                    contents: bytemuck::cast_slice(&font_curve_ordering_list),
+                    contents: bytemuck::cast_slice(&hor_band_list),
+                    usage: wgpu::BufferUsages::STORAGE,
+                });
+        let vertical_band_buffer =
+            gpu_context
+                .device
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Glyph Curve Ordering Buffer"),
+                    contents: bytemuck::cast_slice(&ver_band_list),
                     usage: wgpu::BufferUsages::STORAGE,
                 });
         let font_data_bindgroup =
@@ -294,7 +404,11 @@ impl FontManager {
                         },
                         wgpu::BindGroupEntry {
                             binding: 2,
-                            resource: font_ordering_buffer.as_entire_binding(),
+                            resource: horizontal_band_buffer.as_entire_binding(),
+                        },
+                        wgpu::BindGroupEntry {
+                            binding: 3,
+                            resource: vertical_band_buffer.as_entire_binding(),
                         },
                     ],
                 });

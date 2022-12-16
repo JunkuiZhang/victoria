@@ -26,7 +26,7 @@ pub struct Controller {
 
 impl Controller {
     pub fn new(window: &winit::window::Window, game_settings: Rc<GameSettings>) -> Self {
-        let font_path = Path::new("data").join("chi1.ttf");
+        let font_path = Path::new("data").join("eng1.ttf");
         let font_manager = Rc::new(FontManager::new(
             font_path,
             game_settings.get_window_width(),
@@ -52,8 +52,8 @@ impl Controller {
     }
 
     pub fn update(&mut self) {
-        self.time_manager
-            .update(&mut self.gui_manager, &mut self.graphics.update_queue);
+        // self.time_manager
+        //     .update(&mut self.gui_manager, &mut self.graphics.update_queue);
     }
 
     pub fn draw(&mut self) {
@@ -64,7 +64,7 @@ impl Controller {
 
     pub fn preprocess(&mut self) {
         self.gui_manager.add_text(
-            "你好! 99900:".to_string(),
+            "ABCDEF".to_string(),
             200.0,
             self.font_manager.clone(),
             &self.graphics.context,
