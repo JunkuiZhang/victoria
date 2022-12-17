@@ -172,19 +172,19 @@ fn fs_main(input: FragmengInput) -> @location(0) vec4<f32> {
     let hband_num = u32(input.position.y / glyph_data.height_in_em * f32(glyph_data.band_count));
     let vband_num = u32(input.position.x / glyph_data.width_in_em * f32(glyph_data.band_count));
 
-    // winding_number = winding_number + band_process(true, input.position, input.pixels_per_em, glyph_data.hband_index, hband_num, glyph_data.curve_texel_index);
-    winding_number = winding_number + band_process(false, input.position, input.pixels_per_em, glyph_data.vband_index, vband_num, glyph_data.curve_texel_index);
+    winding_number = winding_number + band_process(true, input.position, input.pixels_per_em, glyph_data.hband_index, hband_num, glyph_data.curve_texel_index);
+    winding_number = winding_number + abs(band_process(false, input.position, input.pixels_per_em, glyph_data.vband_index, vband_num, glyph_data.curve_texel_index));
 
     // Take the average of the horizontal and vertical results. The absolute
 	// value ensures that either winding convention works. The square root
 	// approximates gamma correction.
-    // winding_number = sqrt(clamp(abs(winding_number) * 0.5, 0.0, 1.0));
+    winding_number = sqrt(clamp(abs(winding_number) * 0.5, 0.0, 1.0));
 
     if winding_number > 0.0001 {
         return temp_color * winding_number;
     } else {
-        // return vec4<f32>(0.0, 0.0, 0.0, 0.0);
-        return vec4<f32>(0.5, 0.7, 0.2, 1.0);
+        return vec4<f32>(0.0, 0.0, 0.0, 0.0);
+        // return vec4<f32>(0.5, 0.7, 0.2, 1.0);
     }
     // return vec4<f32>(1.0, 0.7, 0.5, 1.0);
 }

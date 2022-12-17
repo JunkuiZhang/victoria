@@ -66,112 +66,110 @@ impl FontManager {
             if band_count > 16 {
                 band_count = 16;
             }
-            let hband_size = bounding_box.height() as f32 / units_per_em / band_count as f32;
-            let vband_size = bounding_box.width() as f32 / units_per_em / band_count as f32;
+            let hor_band_size = bounding_box.height() as f32 / units_per_em / band_count as f32;
+            let ver_band_size = bounding_box.width() as f32 / units_per_em / band_count as f32;
 
             // processing
-            let mut last_x = 0.0;
-            let mut last_y = 0.0;
+            let mut point0_x = 0.0;
+            let mut point0_y = 0.0;
             let origin_x = bounding_box.x_min as f32 / units_per_em;
             let origin_y = bounding_box.y_min as f32 / units_per_em;
             let this_char_curve_start = curves_index;
-            let hband_index_start = hor_band_list.len();
-            let vband_index_start = ver_band_list.len();
             font_data.push(FontData::new(
                 this_char_curve_start,
-                hband_index_start,
-                vband_index_start,
+                hor_band_list.len(),
+                ver_band_list.len(),
                 band_count as u32,
                 &bounding_box,
                 units_per_em,
             ));
 
             let epsilon = 0.000001;
-            let mut hband_temp = Vec::new();
-            let mut vband_temp = Vec::new();
+            let mut hor_band_temp = Vec::new();
+            let mut ver_band_temp = Vec::new();
             for _ in 0..band_count {
-                hband_temp.push(Vec::new());
-                vband_temp.push(Vec::new());
+                hor_band_temp.push(Vec::new());
+                ver_band_temp.push(Vec::new());
             }
             for command in this_char.point_command_iter() {
                 match *command {
                     font_outline::OutlineDrawCommand::MoveTo(a, b) => {
-                        last_x = a / units_per_em - origin_x;
-                        last_y = b / units_per_em - origin_y;
-                        font_curves.push([-1.0, -1.0, last_x, last_y]);
+                        point0_x = a / units_per_em - origin_x;
+                        point0_y = b / units_per_em - origin_y;
+                        font_curves.push([-1.0, -1.0, point0_x, point0_y]);
                         curves_index += 1;
                     }
                     font_outline::OutlineDrawCommand::LineTo(a, b) => {
-                        let x2 = a / units_per_em - origin_x;
-                        let y2 = b / units_per_em - origin_y;
-                        let x1 = (x2 + last_x) / 2.0;
-                        let y1 = (y2 + last_y) / 2.0;
-                        font_curves.push([x1, y1, x2, y2]);
+                        let point2_x = a / units_per_em - origin_x;
+                        let point2_y = b / units_per_em - origin_y;
+                        let point1_x = (point2_x + point0_x) / 2.0;
+                        let point1_y = (point2_y + point0_y) / 2.0;
+                        font_curves.push([point1_x, point1_y, point2_x, point2_y]);
 
                         let this_char_glyph_offset = curves_index - this_char_curve_start;
                         // horizontal band detect
-                        if (y2 - last_y).abs() > epsilon {
+                        if (point2_y - point0_y).abs() > epsilon {
                             // reject horizontal line, cause it makes no contribute to winding number
                             band_process(
                                 true,
-                                hband_size,
-                                [last_x, last_y],
-                                [x1, y1],
-                                [x2, y2],
+                                hor_band_size,
+                                [point0_x, point0_y],
+                                [point1_x, point1_y],
+                                [point2_x, point2_y],
                                 band_count,
                                 this_char_glyph_offset,
-                                &mut hband_temp,
+                                &mut hor_band_temp,
                             );
                         }
                         // vertical band detect
-                        if (x2 - last_x).abs() > epsilon {
+                        if (point2_x - point0_x).abs() > epsilon {
                             // reject vertical line, cause it makes no contribute to winding number
                             band_process(
                                 false,
-                                vband_size,
-                                [last_x, last_y],
-                                [x1, y1],
-                                [x2, y2],
+                                ver_band_size,
+                                [point0_x, point0_y],
+                                [point1_x, point1_y],
+                                [point2_x, point2_y],
                                 band_count,
                                 this_char_glyph_offset,
-                                &mut vband_temp,
+                                &mut ver_band_temp,
                             );
                         }
-                        last_x = x2;
-                        last_y = y2;
+                        point0_x = point2_x;
+                        point0_y = point2_y;
                         curves_index += 1;
                     }
                     font_outline::OutlineDrawCommand::QuadTo(a1, b1, a, b) => {
-                        let x1 = a1 / units_per_em - origin_x;
-                        let y1 = b1 / units_per_em - origin_y;
-                        let x2 = a / units_per_em - origin_x;
-                        let y2 = b / units_per_em - origin_y;
-                        font_curves.push([x1, y1, x2, y2]);
+                        let point1_x = a1 / units_per_em - origin_x;
+                        let point1_y = b1 / units_per_em - origin_y;
+                        let point2_x = a / units_per_em - origin_x;
+                        let point2_y = b / units_per_em - origin_y;
+                        font_curves.push([point1_x, point1_y, point2_x, point2_y]);
                         let this_char_glyph_offset = curves_index - this_char_curve_start;
                         // horizontal band detect
                         band_process(
                             true,
-                            hband_size,
-                            [last_x, last_y],
-                            [x1, y1],
-                            [x2, y2],
+                            hor_band_size,
+                            [point0_x, point0_y],
+                            [point1_x, point1_y],
+                            [point2_x, point2_y],
                             band_count,
                             this_char_glyph_offset,
-                            &mut hband_temp,
+                            &mut hor_band_temp,
                         );
                         // vertical band detect
                         band_process(
                             false,
-                            vband_size,
-                            [last_x, last_y],
-                            [x1, y1],
-                            [x2, y2],
+                            ver_band_size,
+                            [point0_x, point0_y],
+                            [point1_x, point1_y],
+                            [point2_x, point2_y],
                             band_count,
                             this_char_glyph_offset,
-                            &mut vband_temp,
+                            &mut ver_band_temp,
                         );
-                        last_x = x2;
-                        last_y = y2;
+                        point0_x = point2_x;
+                        point0_y = point2_y;
                         curves_index += 1;
                     }
                     font_outline::OutlineDrawCommand::CurveTo(_, _, _, _, _, _) => unreachable!(),
@@ -183,35 +181,25 @@ impl FontManager {
             let mut vcount = 2 * band_count;
             for index in 0..band_count {
                 hor_band_list.push(hcount as u32);
-                hor_band_list.push(hband_temp[index].len() as u32);
-                hband_temp[index].sort_by(|(max0, _), (max1, _)| max1.partial_cmp(max0).unwrap());
-                hcount += hband_temp[index].len();
+                hor_band_list.push(hor_band_temp[index].len() as u32);
+                hor_band_temp[index]
+                    .sort_by(|(max0, _), (max1, _)| max1.partial_cmp(max0).unwrap());
+                hcount += hor_band_temp[index].len();
 
                 ver_band_list.push(vcount as u32);
-                ver_band_list.push(vband_temp[index].len() as u32);
-                vband_temp[index].sort_by(|(max0, _), (max1, _)| max1.partial_cmp(max0).unwrap());
-                vcount += vband_temp[index].len();
-            }
-            // TODO: Delete this
-            if glyph_id == 4 {
-                println!("Curves: {:?}", font_curves);
-                println!("{:?}", vband_temp);
+                ver_band_list.push(ver_band_temp[index].len() as u32);
+                ver_band_temp[index]
+                    .sort_by(|(max0, _), (max1, _)| max1.partial_cmp(max0).unwrap());
+                vcount += ver_band_temp[index].len();
             }
 
             for index in 0..band_count {
-                for (_, offset) in hband_temp[index].iter() {
+                for (_, offset) in hor_band_temp[index].iter() {
                     hor_band_list.push(*offset);
                 }
-                for (_, offset) in vband_temp[index].iter() {
+                for (_, offset) in ver_band_temp[index].iter() {
                     ver_band_list.push(*offset);
                 }
-            }
-            // TODO: Delete this
-            if glyph_id == 4 {
-                println!("hband: {:?}", ver_band_list);
-            }
-            if glyph_id == 5 {
-                println!("hband: {:?}", ver_band_list);
             }
         }
 
