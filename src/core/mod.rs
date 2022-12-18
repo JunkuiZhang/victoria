@@ -64,7 +64,7 @@ impl Controller {
 
     pub fn preprocess(&mut self) {
         self.gui_manager.add_text(
-            "你好！123。？".to_string(),
+            "你好！123。？?".to_string(),
             200.0,
             self.font_manager.clone(),
             &self.graphics.context,

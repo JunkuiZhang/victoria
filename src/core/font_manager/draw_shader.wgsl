@@ -178,7 +178,7 @@ fn fs_main(input: FragmengInput) -> @location(0) vec4<f32> {
     // Take the average of the horizontal and vertical results. The absolute
 	// value ensures that either winding convention works. The square root
 	// approximates gamma correction.
-    winding_number = sqrt(clamp(abs(winding_number) * 0.5, 0.0, 1.0));
+    winding_number = sqrt(clamp(winding_number * 0.5, 0.0, 1.0));
 
     if winding_number > 0.0001 {
         return temp_color * winding_number;
