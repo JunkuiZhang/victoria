@@ -89,9 +89,26 @@ impl Text {
 }
 
 impl Drawable for Text {
-    fn update_queue(&mut self, content: Vec<u8>, update_queue: &mut Vec<UpdateInfo>) {
+    fn update_queue(
+        &mut self,
+        content: Vec<u8>,
+        update_queue: &mut Vec<UpdateInfo>,
+        gpu_context: &GpuContext,
+    ) {
         let s = String::from_utf8(content).unwrap();
         self.update_string(s);
+        if self.raw_content.len() as u64 > self.string_vec_buffer.size() {
+            self.string_vec_buffer.destroy();
+            self.string_vec_buffer =
+                Rc::new(gpu_context.device.create_buffer(&wgpu::BufferDescriptor {
+                    label: Some("String Vec Buffer"),
+                    size: self.raw_content.len() as u64,
+                    usage: wgpu::BufferUsages::VERTEX
+                        | wgpu::BufferUsages::STORAGE
+                        | wgpu::BufferUsages::COPY_DST,
+                    mapped_at_creation: false,
+                }));
+        }
         update_queue.push(self.get_update_info());
     }
 

@@ -20,7 +20,12 @@ pub struct Graphics {
 
 pub trait Drawable {
     // fn draw(&self, render_pass: Rc<RefCell<wgpu::RenderPass>>, graphics: &Graphics);
-    fn update_queue(&mut self, content: Vec<u8>, update_queue: &mut Vec<UpdateInfo>);
+    fn update_queue(
+        &mut self,
+        content: Vec<u8>,
+        update_queue: &mut Vec<UpdateInfo>,
+        gpu_context: &GpuContext,
+    );
     fn get_update_info(&self) -> UpdateInfo;
     fn get_draw_info(&self, resource_manager: &ResourceManager) -> DrawCall;
 }

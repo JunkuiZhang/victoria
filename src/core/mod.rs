@@ -52,8 +52,11 @@ impl Controller {
     }
 
     pub fn update(&mut self) {
-        self.time_manager
-            .update(&mut self.gui_manager, &mut self.graphics.update_queue);
+        self.time_manager.update(
+            &mut self.gui_manager,
+            &mut self.graphics.update_queue,
+            &self.graphics.context,
+        );
     }
 
     pub fn draw(&mut self) {
@@ -64,7 +67,7 @@ impl Controller {
 
     pub fn preprocess(&mut self) {
         self.gui_manager.add_text(
-            "你好！123。？?".to_string(),
+            "FPS: ".to_string(),
             200.0,
             self.font_manager.clone(),
             &self.graphics.context,

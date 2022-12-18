@@ -39,9 +39,10 @@ impl GuiManager {
         index: usize,
         content: Vec<u8>,
         update_queue: &mut Vec<UpdateInfo>,
+        context: &GpuContext,
     ) {
         // self.content_list[index]
-        self.content_list[index].update_queue(content, update_queue);
+        self.content_list[index].update_queue(content, update_queue, context);
     }
 
     pub fn draw_queue(&self, resource_manager: &ResourceManager, draw_queue: &mut Vec<DrawCall>) {
