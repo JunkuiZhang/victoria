@@ -93,7 +93,7 @@ impl Graphics {
             alpha_mode: wgpu::CompositeAlphaMode::Auto,
         };
         surface.configure(&device, &surface_config);
-        let staging_belt = wgpu::util::StagingBelt::new(0x1000);
+        let staging_belt = wgpu::util::StagingBelt::new(16 * 256); // max 256 utf-16
 
         // Font config
         let context = GpuContext {
