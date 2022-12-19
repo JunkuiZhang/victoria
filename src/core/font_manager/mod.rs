@@ -61,23 +61,19 @@ impl FontManager {
         file_name.push_str(".bin");
         font_save_path = font_save_path.join(file_name);
 
-        let font_drawing_data: FontDrawingData;
-        if font_save_path.exists() {
-            font_drawing_data =
-                bincode::deserialize(&std::fs::read(font_save_path).unwrap()).unwrap();
+        let font_drawing_data: FontDrawingData = if font_save_path.exists() {
+            bincode::deserialize(&std::fs::read(font_save_path.clone()).unwrap()).unwrap_or_else(
+                |_| {
+                    let data = get_font_drawing_data(font_face);
+                    std::fs::write(font_save_path, bincode::serialize(&data).unwrap()).unwrap();
+                    data
+                },
+            )
         } else {
-            font_drawing_data = get_font_drawing_data(font_face);
-            std::fs::File::create(font_save_path.clone()).unwrap();
-            let cont = bincode::serialize(&font_drawing_data);
-            match cont {
-                Ok(data) => {
-                    std::fs::write(font_save_path, data).unwrap();
-                }
-                Err(msg) => {
-                    panic!("Error: {:?}", msg)
-                }
-            }
-        }
+            let data = get_font_drawing_data(font_face);
+            std::fs::write(font_save_path, bincode::serialize(&data).unwrap()).unwrap();
+            data
+        };
 
         // shader config
         let draw_shader = gpu_context

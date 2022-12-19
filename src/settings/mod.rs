@@ -75,14 +75,6 @@ impl GameSettings {
         }
         let es_path = Path::new("data").join(ENGINE_SETTING_FILE);
         let ps_path = Path::new("data").join(PLAYER_SETTING_FILE);
-        if es_path.exists() {
-            std::fs::remove_file(es_path.clone()).unwrap();
-        }
-        std::fs::File::create(es_path.clone()).unwrap();
-        if ps_path.exists() {
-            std::fs::remove_file(ps_path.clone()).unwrap();
-        }
-        std::fs::File::create(ps_path.clone()).unwrap();
         std::fs::write(es_path, toml::to_vec(&self.engine_settings).unwrap()).unwrap();
         std::fs::write(ps_path, toml::to_vec(&self.player_settings).unwrap()).unwrap();
     }
