@@ -65,14 +65,3 @@ fn main() {
         }
     });
 }
-
-#[cfg(test)]
-mod test {
-
-    #[test]
-    fn general_test() {
-        let resource_dir = std::path::Path::new("data");
-        let content = std::fs::read(resource_dir.join("Inconsolata-Regular.ttf")).unwrap();
-        panic!("{:?}", content);
-    }
-}

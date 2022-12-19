@@ -4,10 +4,9 @@ use owned_ttf_parser::GlyphId;
 
 fn main() {
     const LATTER_A: GlyphId = GlyphId(5);
-    const LATTER_GBAR: GlyphId = GlyphId(309);
 
     let font_file = Path::new("data").join("eng1.ttf");
-    let font_data = std::fs::read(font_file).expect("Unable to open file.");
+    let font_data = std::fs::read(font_file.clone()).expect("Unable to open file.");
     let font_face = owned_ttf_parser::Face::parse(&font_data, 0).expect("Unable to parse font.");
     let rect = font_face.glyph_bounding_box(LATTER_A).unwrap();
     let mut glyph_builder = ExmapleBuilder {
@@ -19,6 +18,9 @@ fn main() {
         .unwrap();
     println!("A: {}", glyph_builder.data);
     println!("A total curve count: {}", glyph_builder.curve_count);
+    println!("Filename: {:?}", font_file.file_name());
+    let x: Vec<&str> = font_file.file_name().unwrap().to_str().unwrap().rsplit(".").collect();
+    println!("Filename: {:?}", x);
 }
 
 struct ExmapleBuilder {
