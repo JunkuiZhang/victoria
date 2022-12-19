@@ -23,3 +23,4 @@ env_logger = "*"
 serde = {version = "*", features = ["derive"]}
 toml = "*"
 owned_ttf_parser = "*"
+bincode = "*"

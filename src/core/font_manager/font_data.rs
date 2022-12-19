@@ -1,6 +1,7 @@
 use owned_ttf_parser::Rect;
+use serde::{Deserialize, Serialize};
 
-#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable, Serialize, Deserialize)]
 #[repr(C)]
 pub struct FontData {
     pub curve_texel_index: u32,
