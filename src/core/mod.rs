@@ -72,8 +72,6 @@ impl Controller {
             self.font_manager.clone(),
             &self.graphics.context,
         )
-        // self.gui_manager
-        //     .set_render_pipeline(&mut self.graphics, &self.font_manager);
     }
 
     pub fn exit(&self) {

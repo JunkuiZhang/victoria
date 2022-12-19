@@ -28,17 +28,17 @@ impl Text {
             font_manager.get_face(),
             font_manager.get_window_size(),
         );
+        let raw_content = Rc::new(bytemuck::cast_slice(&string_vec).to_vec());
         let string_vec_buffer =
             gpu_context
                 .device
                 .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                     label: Some("String Vec Buffer"),
-                    contents: bytemuck::cast_slice(&string_vec),
+                    contents: &raw_content,
                     usage: wgpu::BufferUsages::VERTEX
                         | wgpu::BufferUsages::STORAGE
                         | wgpu::BufferUsages::COPY_DST,
                 });
-        let raw_content = Rc::new(bytemuck::cast_slice(&string_vec).to_vec());
 
         Text {
             font_size,

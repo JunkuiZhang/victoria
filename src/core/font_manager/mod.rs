@@ -30,7 +30,7 @@ impl FontManager {
         window_width: u32,
         window_height: u32,
     ) -> Self {
-        let font_file = std::fs::read(font_path.clone()).expect("Unable to read font!");
+        let font_file = std::fs::read(font_path.as_ref()).expect("Unable to read font!");
         let font_face = owned_ttf_parser::OwnedFace::from_vec(font_file, 0).unwrap();
         let window_size = [window_width as f32, window_height as f32];
         FontManager {
@@ -42,7 +42,8 @@ impl FontManager {
                 .unwrap()
                 .to_str()
                 .unwrap()
-                .to_string(),
+                .to_string()
+                .to_lowercase(),
         }
     }
 
@@ -334,10 +335,12 @@ impl FontManager {
         }
     }
 
+    #[inline]
     pub fn get_face(&self) -> &owned_ttf_parser::Face {
         self.font_face.as_face_ref()
     }
 
+    #[inline]
     pub fn get_window_size(&self) -> [f32; 2] {
         self.window_size
     }
