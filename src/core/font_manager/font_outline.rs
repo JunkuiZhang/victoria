@@ -29,6 +29,7 @@ impl FontOutlineData {
         self.points.len()
     }
 
+    #[allow(unused)]
     pub fn debug_print(&self) {
         println!("Command len: {} ==> {:?}", self.points.len(), self.points);
     }

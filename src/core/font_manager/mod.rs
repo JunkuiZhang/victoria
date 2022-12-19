@@ -3,10 +3,7 @@ use std::{path::Path, rc::Rc};
 use owned_ttf_parser::{AsFaceRef, OwnedFace};
 use wgpu::util::DeviceExt;
 
-use crate::{
-    settings::FromGameSettingsFile,
-    utils::{max_3number, min_3number},
-};
+use crate::utils::{max_3number, min_3number};
 
 use self::{
     font_data::FontData, font_graphics::FontGraphics, font_info_saving::FontDrawingData,
@@ -18,7 +15,6 @@ use super::graphics::GpuContext;
 mod font_data;
 pub mod font_graphics;
 mod font_info_saving;
-mod font_manager_builder;
 mod font_outline;
 pub mod string_data;
 
@@ -345,9 +341,8 @@ fn band_process(
     p0: [f32; 2],
     p1: [f32; 2],
     p2: [f32; 2],
-    band_count: usize,
     offset: usize,
-    band_list: &mut Vec<Vec<(f32, u32)>>,
+    band_list: &mut [Vec<(f32, u32)>],
 ) {
     let x_axis;
     let y_axis;
@@ -360,13 +355,13 @@ fn band_process(
     }
     let maxy = max_3number(p0[y_axis], p1[y_axis], p2[y_axis]);
     let miny = min_3number(p0[y_axis], p1[y_axis], p2[y_axis]);
-    for index in 0..band_count {
+    for (index, target_band) in band_list.iter_mut().enumerate() {
         let starty = band_size * (index as f32);
         let endy = starty + band_size;
         if maxy < starty || miny > endy {
             continue;
         }
-        band_list[index].push((
+        target_band.push((
             max_3number(p0[x_axis], p1[x_axis], p2[x_axis]),
             offset as u32,
         ));
@@ -450,7 +445,6 @@ fn get_font_drawing_data(font_face: &owned_ttf_parser::Face) -> FontDrawingData 
                             [point0_x, point0_y],
                             [point1_x, point1_y],
                             [point2_x, point2_y],
-                            band_count,
                             this_char_glyph_offset,
                             &mut hor_band_temp,
                         );
@@ -464,7 +458,6 @@ fn get_font_drawing_data(font_face: &owned_ttf_parser::Face) -> FontDrawingData 
                             [point0_x, point0_y],
                             [point1_x, point1_y],
                             [point2_x, point2_y],
-                            band_count,
                             this_char_glyph_offset,
                             &mut ver_band_temp,
                         );
@@ -487,7 +480,6 @@ fn get_font_drawing_data(font_face: &owned_ttf_parser::Face) -> FontDrawingData 
                         [point0_x, point0_y],
                         [point1_x, point1_y],
                         [point2_x, point2_y],
-                        band_count,
                         this_char_glyph_offset,
                         &mut hor_band_temp,
                     );
@@ -498,7 +490,6 @@ fn get_font_drawing_data(font_face: &owned_ttf_parser::Face) -> FontDrawingData 
                         [point0_x, point0_y],
                         [point1_x, point1_y],
                         [point2_x, point2_y],
-                        band_count,
                         this_char_glyph_offset,
                         &mut ver_band_temp,
                     );
