@@ -70,13 +70,22 @@ impl GameSettings {
         if !self.has_changed {
             return;
         }
-        if !Path::new("data").exists() {
-            std::fs::create_dir_all(std::env::current_dir().unwrap().join("data")).unwrap();
+        let save_path = Path::new("data");
+        if !save_path.exists() {
+            std::fs::create_dir_all(save_path).unwrap();
         }
-        let es_path = Path::new("data").join(ENGINE_SETTING_FILE);
-        let ps_path = Path::new("data").join(PLAYER_SETTING_FILE);
-        std::fs::write(es_path, toml::to_vec(&self.engine_settings).unwrap()).unwrap();
-        std::fs::write(ps_path, toml::to_vec(&self.player_settings).unwrap()).unwrap();
+        let es_path = save_path.join(ENGINE_SETTING_FILE);
+        let ps_path = save_path.join(PLAYER_SETTING_FILE);
+        std::fs::write(
+            es_path,
+            toml::to_vec(&self.engine_settings).expect("Unable to serialize game engine settings!"),
+        )
+        .unwrap();
+        std::fs::write(
+            ps_path,
+            toml::to_vec(&self.player_settings).expect("Unable to serialize game player settings!"),
+        )
+        .unwrap();
     }
 
     #[inline]

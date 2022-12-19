@@ -51,23 +51,31 @@ impl FontManager {
 
         let mut font_save_path = Path::new("data").join("font");
         if !font_save_path.exists() {
-            std::fs::create_dir_all(font_save_path.clone()).unwrap();
+            std::fs::create_dir_all(font_save_path.as_path()).unwrap();
         }
         let mut file_name = self.font_name.clone();
         file_name.push_str(".bin");
         font_save_path = font_save_path.join(file_name);
 
         let font_drawing_data: FontDrawingData = if font_save_path.exists() {
-            bincode::deserialize(&std::fs::read(font_save_path.clone()).unwrap()).unwrap_or_else(
+            bincode::deserialize(&std::fs::read(font_save_path.as_path()).unwrap()).unwrap_or_else(
                 |_| {
                     let data = get_font_drawing_data(font_face);
-                    std::fs::write(font_save_path, bincode::serialize(&data).unwrap()).unwrap();
+                    std::fs::write(
+                        font_save_path,
+                        bincode::serialize(&data).expect("Unable to serialize font data!"),
+                    )
+                    .unwrap();
                     data
                 },
             )
         } else {
             let data = get_font_drawing_data(font_face);
-            std::fs::write(font_save_path, bincode::serialize(&data).unwrap()).unwrap();
+            std::fs::write(
+                font_save_path,
+                bincode::serialize(&data).expect("Unable to deserialize font data!"),
+            )
+            .unwrap();
             data
         };
 
