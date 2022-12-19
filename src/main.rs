@@ -48,6 +48,7 @@ fn main() {
                 },
                 // TODO: impl these
                 // winit::event::WindowEvent::ReceivedCharacter(_) => todo!(),
+                // winit::event::WindowEvent::Ime(_) => todo!(),
                 // winit::event::WindowEvent::ModifiersChanged(_) => todo!(),
                 // winit::event::WindowEvent::CursorMoved { position, .. } => todo!(),
                 // winit::event::WindowEvent::MouseWheel { delta, phase, .. } => todo!(),
