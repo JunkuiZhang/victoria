@@ -17,13 +17,13 @@ pub trait FromGameSettingsFile {
 
 impl<A> FromGameSettingsFile for A
 where
-    A: DeserializeOwned,
+    A: DeserializeOwned + Default,
 {
     fn from_file<P: AsRef<Path>>(path: P) -> Self
     where
         Self: Sized,
     {
-        toml::from_str(std::fs::read_to_string(path).unwrap().as_str()).unwrap()
+        toml::from_str(std::fs::read_to_string(path).unwrap().as_str()).unwrap_or_default()
     }
 }
 
