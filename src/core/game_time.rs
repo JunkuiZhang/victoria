@@ -6,19 +6,21 @@ use super::{
 };
 
 pub struct GameTimeManager {
-    frame_count: u64,
+    delta_time: f32,
+    fps: usize,
+    frame_count: u32,
     last_frame: Instant,
     last_update: Instant,
-    fps: usize,
 }
 
 impl GameTimeManager {
     pub fn new() -> Self {
         GameTimeManager {
+            delta_time: 0.01,
+            fps: 0,
             frame_count: 0,
             last_frame: Instant::now(),
             last_update: Instant::now(),
-            fps: 0,
         }
     }
 
@@ -29,10 +31,10 @@ impl GameTimeManager {
         context: &GpuContext,
     ) {
         let current_time = Instant::now();
-        let elpsed = current_time.duration_since(self.last_frame).as_secs_f64();
+        self.delta_time = current_time.duration_since(self.last_frame).as_secs_f32();
         self.last_frame = current_time;
-        self.frame_count = (1.0 / elpsed) as u64;
-        if self.last_update.elapsed().as_secs_f64() > 0.5 {
+        self.frame_count = (1.0 / self.delta_time) as u32;
+        if self.last_update.elapsed().as_secs_f32() > 0.5 {
             let content = format!("FPS: {}", self.frame_count).as_bytes().to_vec();
             gui_manager.update_at(self.fps, content, update_queue, context);
             self.last_update = current_time;
