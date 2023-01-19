@@ -12,6 +12,7 @@ mod game_time;
 mod graphics;
 mod gui_manager;
 mod resources;
+mod tables;
 mod user_input;
 
 pub struct Controller {
