@@ -13,7 +13,9 @@ fn main() {
     let post_script_name = face
         .names()
         .into_iter()
-        .find(|name| name.name_id == owned_ttf_parser::name_id::POST_SCRIPT_NAME && name.is_unicode())
+        .find(|name| {
+            name.name_id == owned_ttf_parser::name_id::POST_SCRIPT_NAME && name.is_unicode()
+        })
         .and_then(|name| name.to_string());
 
     println!("Family name: {:?}", family_name);
