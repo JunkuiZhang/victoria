@@ -51,21 +51,27 @@ pub struct DrawIndexedInfo {
 }
 
 #[cfg(windows)]
-fn get_backend() -> wgpu::Backends {
+fn get_backend() -> wgpu::InstanceDescriptor {
     // wgpu::Backends::DX12
-    wgpu::Backends::VULKAN
+    wgpu::InstanceDescriptor {
+        backends: wgpu::Backends::VULKAN,
+        dx12_shader_compiler: wgpu::Dx12Compiler::Fxc,
+    }
 }
 
 #[cfg(not(windows))]
-fn get_backend() -> wgpu::Backends {
-    wgpu::Backends::PRIMARY
+fn get_backend() -> wgpu::InstanceDescriptor {
+    wgpu::InstanceDescriptor {
+        backends: wgpu::Backends::PRIMARY,
+        dx12_shader_compiler: wgpu::Dx12Compiler::Fxc,
+    }
 }
 
 impl Graphics {
     pub fn new(window: &winit::window::Window, settings: &GameSettings) -> Self {
         // surface queue config
         let instance = wgpu::Instance::new(get_backend());
-        let surface = unsafe { instance.create_surface(window) };
+        let surface = unsafe { instance.create_surface(window) }.unwrap();
         let adapter =
             pollster::block_on(instance.request_adapter(&wgpu::RequestAdapterOptionsBase {
                 power_preference: wgpu::PowerPreference::HighPerformance,
@@ -86,11 +92,12 @@ impl Graphics {
 
         let surface_config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-            format: surface.get_supported_formats(&adapter)[0],
+            format: surface.get_capabilities(&adapter).formats[0],
             width: settings.get_window_width(),
             height: settings.get_window_height(),
             present_mode: wgpu::PresentMode::AutoVsync,
             alpha_mode: wgpu::CompositeAlphaMode::Auto,
+            view_formats: vec![surface.get_capabilities(&adapter).formats[0]],
         };
         surface.configure(&device, &surface_config);
         let staging_belt = wgpu::util::StagingBelt::new(16 * 256); // max 256 utf-16

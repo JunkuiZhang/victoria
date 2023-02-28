@@ -78,12 +78,14 @@ impl GameSettings {
         let ps_path = save_path.join(PLAYER_SETTING_FILE);
         std::fs::write(
             es_path,
-            toml::to_vec(&self.engine_settings).expect("Unable to serialize game engine settings!"),
+            toml::to_string(&self.engine_settings)
+                .expect("Unable to serialize game engine settings!"),
         )
         .unwrap();
         std::fs::write(
             ps_path,
-            toml::to_vec(&self.player_settings).expect("Unable to serialize game player settings!"),
+            toml::to_string(&self.player_settings)
+                .expect("Unable to serialize game player settings!"),
         )
         .unwrap();
     }

@@ -318,7 +318,8 @@ impl FontManager {
                         targets: &[Some(wgpu::ColorTargetState {
                             format: gpu_context
                                 .surface
-                                .get_supported_formats(&gpu_context.adapter)[0],
+                                .get_capabilities(&gpu_context.adapter)
+                                .formats[0],
                             blend: Some(wgpu::BlendState::ALPHA_BLENDING),
                             write_mask: wgpu::ColorWrites::ALL,
                         })],
