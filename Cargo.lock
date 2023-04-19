@@ -503,6 +503,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "gputext"
+version = "0.1.0"
+dependencies = [
+ "bincode",
+ "bytemuck",
+ "env_logger",
+ "owned_ttf_parser",
+ "pollster",
+ "serde",
+ "toml",
+ "wgpu",
+ "winit",
+]
+
+[[package]]
 name = "hashbrown"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -791,21 +806,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3cf2aae958bd232cac5069850591667ad422d263686d75b52a065f9badeee5a3"
 dependencies = [
  "jni-sys",
-]
-
-[[package]]
-name = "neogame"
-version = "0.1.0"
-dependencies = [
- "bincode",
- "bytemuck",
- "env_logger",
- "owned_ttf_parser",
- "pollster",
- "serde",
- "toml",
- "wgpu",
- "winit",
 ]
 
 [[package]]
