@@ -110,15 +110,9 @@ fn band_process(horizontal: bool, pixel: vec2<f32>, pixels_per_em: f32, band_ind
         }
 
         var shift_num: u32 = 0u;
-        if point0[y_axis] > 0.0 {
-            shift_num = shift_num + 2u;
-        }
-        if point1[y_axis] > 0.0 {
-            shift_num = shift_num + 4u;
-        }
-        if point2[y_axis] > 0.0 {
-            shift_num = shift_num + 8u;
-        }
+        shift_num += u32(step(0.0, point0[y_axis])) * 2u;
+        shift_num += u32(step(0.0, point1[y_axis])) * 4u;
+        shift_num += u32(step(0.0, point2[y_axis])) * 8u;
 
         let res = (0x2e74u >> shift_num) & 3u;
         if res == 0u {
