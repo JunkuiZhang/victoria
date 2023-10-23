@@ -9,7 +9,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5110f1c78cf582855d895ecd0746b653db010cec6d9f5575293f27934d980a39"
 dependencies = [
  "ab_glyph_rasterizer",
- "owned_ttf_parser",
+ "owned_ttf_parser 0.19.0",
 ]
 
 [[package]]
@@ -537,7 +537,7 @@ dependencies = [
  "bincode",
  "bytemuck",
  "env_logger",
- "owned_ttf_parser",
+ "owned_ttf_parser 0.20.0",
  "pollster",
  "serde",
  "toml",
@@ -1011,7 +1011,16 @@ version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "706de7e2214113d63a8238d1910463cfce781129a6f263d13fdb09ff64355ba4"
 dependencies = [
- "ttf-parser",
+ "ttf-parser 0.19.0",
+]
+
+[[package]]
+name = "owned_ttf_parser"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d4586edfe4c648c71797a74c84bacb32b52b212eff5dfe2bb9f2c599844023e7"
+dependencies = [
+ "ttf-parser 0.20.0",
 ]
 
 [[package]]
@@ -1420,6 +1429,12 @@ name = "ttf-parser"
 version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "44dcf002ae3b32cd25400d6df128c5babec3927cd1eb7ce813cfff20eb6c3746"
+
+[[package]]
+name = "ttf-parser"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "17f77d76d837a7830fe1d4f12b7b4ba4192c1888001c7164257e4bc6d21d96b4"
 
 [[package]]
 name = "unicode-ident"
